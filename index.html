@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Informe de Seguimiento — Convenio 3007 de 2025</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --navy:#1F3864;
+    --navy-dark:#13233F;
+    --gold:#F2B705;
+    --red:#C8102E;
+    --gray-line:#D9D9D9;
+    --gray-bg:#F5F6F8;
+    --text:#2B2B2B;
+    --muted:#7A7A7A;
+    --inactive:#E7EAEE;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; font-family:Arial, Helvetica, sans-serif; color:var(--text); background:var(--gray-bg); }
+
+  /* ===== Topbar ===== */
+  .topbar{
+    position:sticky; top:0; z-index:60;
+    background:#fff; border-bottom:1px solid var(--gray-line);
+    padding:12px 28px; display:flex; align-items:center; justify-content:space-between;
+    gap:16px; flex-wrap:wrap;
+  }
+  .brand{ display:flex; align-items:center; gap:14px; }
+  .brand img.custom-logo{ max-height:42px; display:none; }
+  .text-logos{ display:flex; align-items:center; gap:14px; }
+  .brand .logo-box{ display:flex; flex-direction:column; line-height:1.1; }
+  .brand .logo-box b{ color:var(--navy); font-size:15px; }
+  .brand .logo-box span{ color:var(--red); font-weight:800; font-size:15px; letter-spacing:1px; }
+  .divider-vert{ width:1px; height:32px; background:var(--gray-line); }
+  .corte-pill{
+    font-size:12px; color:var(--navy); background:#EEF3FA; border:1px solid #D7E3F5;
+    padding:5px 12px; border-radius:20px; font-weight:700;
+  }
+
+  .colorbar{
+    height:6px; width:100%;
+    background:linear-gradient(to right, #2B2B2B 0 25%, var(--gold) 25% 50%, var(--navy) 50% 75%, var(--red) 75% 100%);
+  }
+
+  /* ===== Layout con sidebar izquierdo ===== */
+  .layout-main{ display:flex; align-items:flex-start; }
+  .sidebar{
+    position:sticky; top:69px; z-index:55;
+    width:230px; flex-shrink:0;
+    background:#fff; border-right:1px solid var(--gray-line);
+    height:calc(100vh - 69px); overflow-y:auto;
+    padding:18px 0;
+  }
+  .sidebar button.nav-item{
+    display:block; width:100%; text-align:left;
+    border:none; background:none; padding:12px 20px; font-size:13.5px; font-weight:700;
+    color:#555; cursor:pointer; border-left:4px solid transparent;
+    font-family:inherit;
+  }
+  .sidebar button.nav-item:hover{ color:var(--navy); background:#F6F8FB; }
+  .sidebar button.nav-item.active{ color:var(--navy); border-left-color:var(--navy); background:#EEF3FA; }
+  .sidebar button.nav-config{ color:var(--red); }
+  .sidebar button.nav-config.active{ border-left-color:var(--red); color:var(--red); background:#FBEEF0; }
+  .sidebar .submenu{
+    display:none; padding:2px 0 6px;
+  }
+  .sidebar .submenu.open{ display:block; }
+  .sidebar .submenu button.nav-sub{
+    display:block; width:100%; text-align:left;
+    border:none; background:none; padding:9px 20px 9px 42px; font-size:12.5px; font-weight:600;
+    color:#777; cursor:pointer; border-left:4px solid transparent;
+    font-family:inherit;
+  }
+  .sidebar .submenu button.nav-sub:hover{ color:var(--red); background:#FBF6F7; }
+  .sidebar .submenu button.nav-sub.active{ color:var(--red); border-left-color:var(--red); background:#FBEEF0; }
+  .sidebar .caret{ float:right; font-size:11px; transition:transform .15s; }
+  .sidebar .caret.open{ transform:rotate(90deg); }
+  @media (max-width:820px){
+    .layout-main{ flex-direction:column; }
+    .sidebar{ position:static; width:100%; height:auto; border-right:none; border-bottom:1px solid var(--gray-line); }
+  }
+
+  .content-area{ flex:1; min-width:0; }
+  .deck{ max-width:1180px; margin:0 auto; padding:0 20px 60px; }
+  .page{ display:none; }
+  .page.active{ display:block; }
+
+  .slide{
+    background:#fff; border:1px solid var(--gray-line); border-radius:6px;
+    margin-top:28px; padding:34px 40px 30px; position:relative;
+  }
+  .slide-eyebrow{ font-size:11.5px; letter-spacing:1.5px; color:var(--muted); text-transform:uppercase; margin-bottom:6px; }
+  .slide h1{ color:var(--navy); font-size:30px; margin:0 0 4px; }
+  .slide h2{ color:#555; font-size:26px; font-weight:700; margin:0 0 18px; }
+  .slide .subtitle{ color:#444; font-size:15px; margin:0 0 22px; }
+  .slide-footer-logo{
+    display:block; width:200px; max-width:40%; height:auto;
+    margin:30px auto 0; opacity:0.95;
+  }
+
+  /* ===== Hoja 1 - panel de control ===== */
+  .config-grid{ display:grid; grid-template-columns:1fr 1fr; gap:22px; margin-top:20px; }
+  @media (max-width:900px){ .config-grid{ grid-template-columns:1fr; } }
+  .config-card{
+    border:1px solid var(--gray-line); border-left:5px solid var(--navy); border-radius:8px;
+    padding:20px 22px; background:#fff;
+  }
+  .config-card.gold{ border-left-color:var(--gold); }
+  .config-card.red{ border-left-color:var(--red); }
+  .config-card h3{ margin:0 0 12px; color:var(--navy); font-size:15.5px; }
+  .config-card p{ font-size:13px; color:#444; line-height:1.55; margin:0 0 12px; }
+  .config-card label.field-label{ display:block; font-size:12px; font-weight:700; color:var(--navy); margin-bottom:6px; }
+  .config-card input[type=file], .config-card input[type=date], .config-card input[type=text]{
+    font-size:13px; padding:8px 10px; border:1px solid var(--gray-line); border-radius:5px; width:100%;
+  }
+  .upload-btn{
+    display:inline-block; background:var(--navy); color:#fff; padding:9px 16px; border-radius:5px;
+    font-size:13px; font-weight:700; cursor:pointer;
+  }
+  .upload-btn:hover{ background:var(--navy-dark); }
+  input[type=file]#excelInputHoja1, input[type=file]#logoInput{ display:none; }
+  #fileStatus{ font-size:12.5px; color:var(--muted); margin-top:10px; display:block; }
+  #fileStatus.ok{ color:#1a7a3c; font-weight:700; }
+  #fileStatus.err{ color:var(--red); font-weight:700; }
+  .logo-preview{
+    margin-top:12px; display:flex; align-items:center; gap:10px;
+  }
+  .logo-preview img{ max-height:44px; max-width:160px; border:1px solid var(--gray-line); border-radius:4px; padding:4px; background:#fafafa; display:none; }
+  .logo-preview .ph{ font-size:12px; color:var(--muted); font-style:italic; }
+
+  .help-box{
+    background:#FBFBFD; border:1px dashed var(--gray-line); border-radius:6px;
+    padding:16px 20px; font-size:12.5px; color:#444; margin-top:0;
+  }
+  .help-box b{ color:var(--navy); }
+  .help-box code{ background:#F0F2F5; padding:1px 5px; border-radius:3px; }
+  .help-box ul{ margin:8px 0 0; padding-left:20px; }
+  .help-box li{ margin-bottom:5px; }
+
+  hr.rule{ border:none; border-top:1px solid var(--gray-line); margin:14px 0 24px; }
+
+  /* Portada */
+  .cover{ text-align:center; padding:70px 40px; }
+  .cover .custom-logo-cover{ display:none; max-height:70px; margin:0 auto 20px; }
+  .cover .conv-tag{ display:inline-block; margin-top:36px; font-size:13px; color:var(--muted); }
+  .cover .conv-title{ font-size:20px; font-weight:800; color:var(--navy); margin-top:4px; }
+  .cover .conv-title .n3007{ color:var(--red); }
+
+  /* Cards (resumen ejecutivo estilo) */
+  .cards-row{ display:flex; gap:20px; flex-wrap:wrap; margin-bottom:20px; }
+  .card{ flex:1 1 260px; border:1px solid var(--gray-line); border-left:5px solid var(--navy); border-radius:6px; padding:16px 18px; }
+  .card.gold{ border-left-color: var(--gold); }
+  .card h3{ margin:0 0 8px; color:var(--navy); font-size:15px; }
+  .card p{ margin:0; font-size:13.5px; color:#333; line-height:1.5; }
+
+  /* Tables */
+  table.data{ width:100%; border-collapse:collapse; font-size:12.5px; margin-top:6px; }
+  table.data th{ background:var(--navy); color:#fff; text-align:left; padding:9px 10px; font-size:11.5px; letter-spacing:.3px; }
+  table.data td{ padding:9px 10px; border-bottom:1px solid var(--gray-line); vertical-align:top; }
+  table.data tr:nth-child(even) td{ background:#FAFBFC; }
+  table.data tfoot td{ font-weight:800; background:#EEF1F6; color:var(--navy); }
+  .empty-row td{ text-align:center; color:var(--muted); font-style:italic; padding:18px; }
+  .table-scroll{ overflow-x:auto; }
+
+  /* KPIs contactabilidad */
+  .kpi-row{ display:flex; gap:16px; flex-wrap:wrap; margin-bottom:26px; }
+  .kpi{ flex:1 1 200px; border-radius:8px; padding:16px 18px; background:#F6F8FB; border:1px solid var(--gray-line); }
+  .kpi .kpi-label{ font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+  .kpi .kpi-value{ font-size:26px; font-weight:800; color:var(--navy); margin-top:4px; }
+  .kpi.sin .kpi-value{ color:#2E6FDB; }
+  .kpi.con .kpi-value{ color:#1a7a3c; }
+  .kpi.pct .kpi-value{ color:#C97A0C; }
+
+  .contact-grid{ display:grid; grid-template-columns:1.05fr 1fr; gap:24px; align-items:start; }
+  @media (max-width:860px){ .contact-grid{ grid-template-columns:1fr; } }
+
+  .chart-wrap{ border:1px solid var(--gray-line); border-radius:8px; padding:16px; }
+  .bar-row{ display:flex; align-items:center; gap:10px; margin:10px 0; }
+  .bar-row .zlabel{ width:58px; font-size:12px; color:#444; }
+  .bar-track{ flex:1; display:flex; height:16px; border-radius:3px; overflow:hidden; background:#eee; }
+  .bar-sin{ background:#2E6FDB; height:100%; }
+  .bar-con{ background:#22A559; height:100%; }
+  .bar-nums{ width:70px; font-size:11.5px; color:#555; text-align:right; }
+  .legend{ display:flex; gap:18px; font-size:12px; color:#444; margin-top:10px; }
+  .legend span::before{ content:""; display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px; }
+  .legend .l-sin::before{ background:#2E6FDB; }
+  .legend .l-con::before{ background:#22A559; }
+
+  .insight{ margin-top:16px; padding:14px 16px; border-radius:8px; background:#EAF3EA; border:1px solid #BFE0BF; font-size:13px; color:#1a4d2e; }
+
+  .thanks{ text-align:center; padding:90px 40px; }
+  .thanks .big{ font-size:56px; font-weight:900; letter-spacing:2px; color:var(--navy-dark); }
+
+  /* ===== Registro fotografico ===== */
+  .photo-subject{ margin-bottom:34px; }
+  .photo-subject:last-child{ margin-bottom:0; }
+  .photo-subject-header{ margin-bottom:14px; }
+  .photo-subject-header .psh-title{ font-weight:800; color:var(--navy); font-size:15.5px; }
+  .photo-subject-header .psh-detail{ color:var(--muted); font-size:12.5px; margin-top:2px; }
+  .photo-grid{
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:14px;
+  }
+  .photo-thumb{
+    position:relative; border:1px solid var(--gray-line); border-radius:8px; overflow:hidden;
+    cursor:pointer; background:#f0f0f0; aspect-ratio:4/3;
+  }
+  .photo-thumb img{ width:100%; height:100%; object-fit:cover; display:block; transition:transform .2s; }
+  .photo-thumb:hover img{ transform:scale(1.05); }
+  .photo-thumb .pt-label{
+    position:absolute; bottom:0; left:0; right:0; background:rgba(19,35,63,0.75); color:#fff;
+    font-size:11px; padding:4px 8px;
+  }
+  .lightbox{
+    display:none; position:fixed; inset:0; background:rgba(10,14,20,0.88); z-index:200;
+    align-items:center; justify-content:center; padding:30px;
+  }
+  .lightbox.open{ display:flex; }
+  .lightbox img{ max-width:92vw; max-height:86vh; border-radius:6px; box-shadow:0 10px 40px rgba(0,0,0,.5); }
+  .lightbox-close{
+    position:absolute; top:20px; right:28px; color:#fff; font-size:32px; cursor:pointer; line-height:1;
+    font-weight:300;
+  }
+  .lightbox-caption{ position:absolute; bottom:24px; left:0; right:0; text-align:center; color:#eee; font-size:13px; }
+
+  .source-note{ margin-top:16px; font-size:11.5px; color:var(--muted); font-style:italic; }
+
+  /* ===== Mapa ===== */
+  .map-header{ margin-bottom:14px; }
+  .map-layout{ display:grid; grid-template-columns:1.5fr 1fr; gap:24px; align-items:start; }
+  @media (max-width:900px){ .map-layout{ grid-template-columns:1fr; } }
+  .map-panel{ position:relative; border:1px solid var(--gray-line); border-radius:8px; padding:20px; }
+  #mapSvg{ width:100%; height:auto; display:block; }
+  path.dept{ stroke:#fff; stroke-width:0.7; cursor:default; transition:opacity .15s; }
+  path.dept.active{ cursor:pointer; }
+  path.dept:hover{ opacity:0.85; stroke:var(--navy-dark); stroke-width:1.4; }
+  .dept-label{ font-size:8px; fill:#5a5a5a; pointer-events:none; text-anchor:middle; }
+  .dept-label.active-label{ fill:#fff; font-weight:700; font-size:8.5px; }
+  .tooltip{
+    position:absolute; pointer-events:none; background:var(--navy-dark); color:#fff;
+    padding:10px 12px; border-radius:6px; font-size:12.5px; line-height:1.5;
+    max-width:240px; opacity:0; transition:opacity .1s; z-index:20;
+    box-shadow:0 4px 14px rgba(0,0,0,.25);
+  }
+  .tooltip b{ color:var(--gold); }
+  .legend-scale{ display:flex; align-items:center; gap:10px; margin-top:14px; font-size:12px; color:#444; flex-wrap:wrap; }
+  .legend-swatch{ width:16px; height:16px; border-radius:3px; display:inline-block; }
+  .legend-row{ display:flex; align-items:center; gap:6px; }
+  .map-kpi-strip{ display:flex; gap:14px; margin-bottom:18px; flex-wrap:wrap; }
+  .dept-list{ max-height:560px; overflow-y:auto; border:1px solid var(--gray-line); border-radius:8px; padding:16px; }
+  .dept-item{ border-bottom:1px solid var(--gray-line); padding:10px 2px; font-size:12.5px; cursor:pointer; }
+  .dept-item:hover{ background:#F8FAFD; }
+  .dept-item.selected{ background:#EEF3FA; }
+  .dept-item .dname{ font-weight:800; color:var(--navy); font-size:13px; }
+  .dept-item .dmeta{ color:#555; margin-top:2px; }
+  .dept-item .dmunis{ color:var(--muted); font-size:11.5px; margin-top:2px; }
+  .dept-item .badge{ display:inline-block; background:var(--navy); color:#fff; border-radius:10px; padding:1px 8px; font-size:11px; font-weight:700; margin-left:6px; }
+
+  /* ===== Pantalla de acceso ===== */
+  .login-overlay{
+    position:fixed; inset:0; z-index:1000;
+    background:linear-gradient(160deg, #13233F 0%, #1F3864 100%);
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .login-overlay.unlocked{ display:none; }
+  .login-card{
+    background:#fff; border-radius:10px; padding:36px 34px; width:100%; max-width:380px;
+    box-shadow:0 12px 44px rgba(0,0,0,.35); text-align:center;
+  }
+  .login-card .lc-brand{ font-size:15px; font-weight:800; color:var(--navy); }
+  .login-card .lc-brand span{ color:var(--red); }
+  .login-card h2{ color:var(--navy); font-size:19px; margin:14px 0 4px; }
+  .login-card p{ color:var(--muted); font-size:12.5px; margin:0 0 20px; }
+  .login-card input{
+    width:100%; padding:11px 12px; margin-bottom:12px;
+    border:1px solid var(--gray-line); border-radius:6px; font-size:13.5px; font-family:inherit;
+  }
+  .login-card input:focus{ outline:2px solid var(--navy); border-color:var(--navy); }
+  .login-card button{
+    width:100%; padding:11px; background:var(--navy); color:#fff; border:none; border-radius:6px;
+    font-size:14px; font-weight:700; cursor:pointer; font-family:inherit;
+  }
+  .login-card button:hover{ background:var(--navy-dark); }
+  .login-error{ color:var(--red); font-size:12.5px; margin-top:10px; display:none; font-weight:700; }
+  .login-error.show{ display:block; }
+  .login-ribbon{ height:5px; border-radius:3px; margin-bottom:18px;
+    background:linear-gradient(to right, #2B2B2B 0 25%, var(--gold) 25% 50%, var(--navy) 50% 75%, var(--red) 75% 100%); }
+</style>
+</head>
+<body>
+
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <div class="login-ribbon"></div>
+    <div class="lc-brand">Unidad para las Víctimas · <span>CISP</span></div>
+    <h2>Informe de Seguimiento</h2>
+    <p>Convenio 3007 de 2025 — Acceso restringido</p>
+    <form id="loginForm">
+      <input type="text" id="loginUser" placeholder="Usuario" autocomplete="off" required>
+      <input type="password" id="loginPass" placeholder="Contraseña" required>
+      <button type="submit">Ingresar</button>
+      <div class="login-error" id="loginError">Usuario o contraseña incorrectos.</div>
+    </form>
+  </div>
+</div>
+
+<div class="topbar">
+  <div class="brand">
+    <img id="customLogo" class="custom-logo" alt="logo">
+    <div id="textLogos" class="text-logos">
+      <div class="logo-box"><b>Unidad para</b><b>las Víctimas</b></div>
+      <div class="divider-vert"></div>
+      <div class="logo-box"><span>CISP</span></div>
+    </div>
+  </div>
+  <div class="corte-pill">Corte: <span class="fecha-corte-display">16 de junio de 2026</span></div>
+</div>
+<div class="colorbar"></div>
+
+<div class="layout-main">
+
+<div class="sidebar" id="sidebar">
+  <button class="nav-item nav-config" id="btnConfigParent" data-toggle="submenu">
+    Configuración <span class="caret" id="configCaret">▶</span>
+  </button>
+  <div class="submenu open" id="configSubmenu">
+    <button class="nav-sub" data-page="manual">Manual de usuario</button>
+    <button class="nav-sub active" data-page="config">Configuración</button>
+  </div>
+  <button class="nav-item" data-page="informe">Informe</button>
+  <button class="nav-item" data-page="fotos">Registro Fotográfico</button>
+</div>
+
+<div class="content-area">
+<div class="deck">
+
+  <!-- ===================== MANUAL DE USUARIO ===================== -->
+  <div class="page" id="page-manual">
+    <div class="slide">
+      <div class="slide-eyebrow">Configuración · Manual de usuario</div>
+      <h2>Manual de usuario</h2>
+      <p class="subtitle">Guía rápida para actualizar y compartir este informe interactivo.</p>
+
+      <div class="help-box" style="margin-bottom:18px;">
+        <b>1. ¿Qué es este archivo?</b>
+        <p style="margin:8px 0 0;">Es un informe interactivo autocontenido: un solo archivo HTML que se abre en cualquier navegador
+        (Chrome, Edge, Firefox) haciendo doble clic. No requiere instalar nada. Solo necesita internet la primera vez que se abre,
+        para descargar dos librerías de visualización.</p>
+      </div>
+
+      <div class="help-box" style="margin-bottom:18px;">
+        <b>2. Actualizar los datos (Excel)</b>
+        <p style="margin:8px 0 0;">En la hoja <b>Configuración → 1 · Cargar Excel del corte</b>, selecciona el archivo
+        <code>.xlsx</code> del nuevo corte. Las tablas del Informe y el Mapa de Colombia se recalculan al instante.
+        Estructura esperada del Excel — los nombres de hoja deben coincidir exactamente:</p>
+        <ul>
+          <li><code>Maquinaria_Amarilla</code>: ID, Caso Nombre, Medida, Producto / Medida, Accion, Actividad / Accion, Proyeccion de costos, Observaciones</li>
+          <li><code>Documentacion_Completa</code>: Tipo, Caso Nombre, Medida ID, Producto / Medida, Accion ID, Actividad / Accion, Proyeccion de costos</li>
+          <li><code>Acompanamiento_Documentacion</code>: Tipo, Caso Nombre, Macroregion, Caso DT, Caso Mpio, Caso Dpto</li>
+          <li><code>Acciones_Rehabilitacion</code>: Tipo, Caso Nombre, Medida ID, Producto / Medida, Accion ID, Actividad / Accion, Proyeccion de costos</li>
+          <li><code>Seguimiento_Contactabilidad</code>: Zona, Sin Respuesta, Con Respuesta</li>
+          <li><code>Insumo_Sujetos</code> (alimenta el Mapa Colombia): TIPO SUJETO, ID sujeto, Sujeto, ZONA, DANE, DEPARTAMENTO, MUNCIPIO, Accion, estado de implementación, Fecha, Descripción de la acción, OBSERVACIONES</li>
+        </ul>
+        <p style="margin:8px 0 0;">Puedes cargar hojas parciales: las que falten simplemente no se actualizan y mantienen su último dato.</p>
+      </div>
+
+      <div class="help-box" style="margin-bottom:18px;">
+        <b>3. Fecha de corte, logo y nombres de las hojas</b>
+        <p style="margin:8px 0 0;">Desde la hoja <b>Configuración</b> también puedes: cambiar la <b>fecha de corte</b> (se refleja en la
+        barra superior y en la portada); cargar un <b>logo</b> en imagen (reemplaza los logos de texto de la esquina superior izquierda
+        y aparece en la portada, sin afectar la fecha de corte); y <b>renombrar las pestañas</b> "Informe" y "Registro Fotográfico"
+        si se requiere otro título.</p>
+      </div>
+
+      <div class="help-box" style="margin-bottom:18px;">
+        <b>4. Registro fotográfico</b>
+        <p style="margin:8px 0 0;">En <b>Configuración → 5 · Cargar registro fotográfico</b> puedes seleccionar varias imágenes o una
+        carpeta completa. Las fotos se agrupan automáticamente por Sujeto usando el nombre del archivo: por ejemplo,
+        <code>Flamenco_1.jpg</code> y <code>Flamenco_2.jpg</code> forman el grupo "Flamenco". Cada carga reemplaza el registro anterior.
+        En la hoja "Registro Fotográfico", haz clic en cualquier miniatura para verla ampliada (cierra con la X, clic afuera o tecla Esc).</p>
+      </div>
+
+      <div class="help-box" style="margin-bottom:18px;">
+        <b>5. Mapa de implementación</b>
+        <p style="margin:8px 0 0;">El mapa colorea los departamentos según el número de acciones registradas en la hoja
+        <code>Insumo_Sujetos</code> del Excel, sin importar su estado de implementación. Pasa el mouse sobre un departamento para ver
+        sus acciones, sujetos y municipios; el panel derecho lista los departamentos ordenados de mayor a menor actividad.</p>
+      </div>
+
+      <div class="help-box">
+        <b>6. Importante al compartir</b>
+        <p style="margin:8px 0 0;">Los cambios hechos en el navegador (Excel cargado, fotos, logo, fecha) <b>no se guardan dentro del
+        archivo HTML</b>: viven solo en la sesión abierta. Para presentar, abre el archivo y carga los insumos al inicio de la reunión;
+        o comparte el HTML junto con el Excel del corte para que cada persona los cargue. Si se requiere dejar una versión "congelada"
+        con datos actualizados de forma permanente, se debe generar una nueva versión del archivo.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== CONFIGURACION ===================== -->
+  <div class="page active" id="page-config">
+    <div class="slide">
+      <div class="slide-eyebrow">Configuración</div>
+      <h2>Panel de configuración</h2>
+      <p class="subtitle">Carga el Excel del corte, actualiza el logo y la fecha de corte antes de compartir el informe.</p>
+
+      <div class="config-grid">
+        <div class="config-card">
+          <h3>1 · Cargar Excel del corte</h3>
+          <p>Carga un archivo <code>.xlsx</code> con las hojas del informe (tablas) y, si quieres actualizar el mapa, la hoja <code>Insumo_Sujetos</code>.</p>
+          <label class="upload-btn" for="excelInputHoja1">Seleccionar archivo Excel</label>
+          <input type="file" id="excelInputHoja1" accept=".xlsx,.xls">
+          <span id="fileStatus">Sin archivo cargado — se muestran los datos de ejemplo (corte 16-jun-2026).</span>
+        </div>
+
+        <div class="config-card gold">
+          <h3>2 · Fecha de corte</h3>
+          <p>Esta fecha se muestra en la parte superior del informe y en la portada.</p>
+          <label class="field-label" for="fechaCorteInput">Fecha de corte del informe</label>
+          <input type="date" id="fechaCorteInput" value="2026-06-16">
+        </div>
+
+        <div class="config-card red">
+          <h3>3 · Logo a presentar</h3>
+          <p>Al cargar una imagen, reemplaza los logos de texto en la esquina superior izquierda y en la portada. La fecha de corte (a la derecha) no se modifica.</p>
+          <label class="upload-btn" for="logoInput">Seleccionar imagen de logo</label>
+          <input type="file" id="logoInput" accept="image/*">
+          <div class="logo-preview">
+            <img id="logoPreview" alt="vista previa del logo">
+            <span class="ph" id="logoPh">Sin logo personalizado — se muestran los logos por defecto.</span>
+          </div>
+        </div>
+
+        <div class="config-card gold">
+          <h3>4 · Cargar registro fotográfico</h3>
+          <p>Selecciona varias imágenes o una carpeta completa. Se agrupan automáticamente por Sujeto usando el nombre del archivo
+          (por ejemplo <code>Flamenco_1.jpg</code>, <code>Flamenco_2.jpg</code> → grupo "Flamenco"). Los archivos nuevos reemplazan el registro actual
+          en la hoja "Registro Fotográfico".</p>
+          <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+            <label class="upload-btn" for="photoInputFiles">Seleccionar fotos</label>
+            <input type="file" id="photoInputFiles" accept="image/*" multiple>
+            <label class="upload-btn" for="photoInputFolder" style="background:var(--gold); color:#3a2c00;">Seleccionar carpeta</label>
+            <input type="file" id="photoInputFolder" webkitdirectory directory multiple>
+          </div>
+          <span id="photoStatus" style="font-size:12.5px; color:var(--muted); margin-top:10px; display:block;">
+            Sin fotos cargadas — se muestran las fotos de ejemplo del proyecto.
+          </span>
+        </div>
+
+        <div class="config-card">
+          <h3>5 · Nombres de las hojas</h3>
+          <p>Si prefieres otros nombres para las hojas del menú, cámbialos aquí — se actualizan al instante en la barra de navegación.
+          La estructura detallada del Excel y demás instrucciones están en el <b>Manual de usuario</b> (menú de la izquierda).</p>
+          <label class="field-label" for="tabNameInforme">Nombre de la hoja "Informe"</label>
+          <input type="text" id="tabNameInforme" value="Informe" style="margin-bottom:14px;">
+          <label class="field-label" for="tabNameFotos">Nombre de la hoja "Registro Fotográfico"</label>
+          <input type="text" id="tabNameFotos" value="Registro Fotográfico">
+        </div>
+
+        <div class="config-card red">
+          <h3>6 · Guardar configuración en el repositorio</h3>
+          <p>Los ajustes hechos aquí (fecha, nombres de hojas, logo) viven solo en esta sesión del navegador.
+          Para dejarlos permanentes, descarga el archivo de configuración y súbelo al repositorio reemplazando
+          el <code>config.json</code> existente. Si cargaste un logo, guárdalo también como <code>assets/logo.png</code>.</p>
+          <button class="upload-btn" style="border:none; font-family:inherit;" onclick="exportarConfig()">Descargar config.json</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== INFORME (todo el contenido en scroll continuo) ===================== -->
+  <div class="page" id="page-informe">
+
+  <!-- ===================== PORTADA ===================== -->
+    <div class="slide cover">
+      <img id="customLogoCover" class="custom-logo-cover" alt="logo">
+      <div class="slide-eyebrow">Convenio 3007 de 2025</div>
+      <h1 style="font-size:44px;">Informe de <b>Seguimiento</b></h1>
+      <p class="subtitle" style="font-size:17px;">Análisis de Ejecución y Contactabilidad</p>
+      <div class="conv-tag">Implementación de Planes Integrales de Reparación Colectiva</div>
+      <div class="conv-title">Convenio <span class="n3007">3007</span> de 2025</div>
+      <div class="source-note">Corte: <span class="fecha-corte-display">16 de junio de 2026</span></div>
+    </div>
+
+  <!-- ===================== MAQUINARIA AMARILLA ===================== -->
+    <div class="slide">
+      <div class="slide-eyebrow">Sección 1</div>
+      <h2>Sujetos con maquinaria amarilla</h2>
+      <div class="table-scroll">
+        <table class="data" id="tblMaquinaria">
+          <thead>
+            <tr>
+              <th>ID</th><th>Caso Nombre</th><th>Medida</th><th>Producto / Medida</th>
+              <th>Acción</th><th>Actividad / Acción</th><th>Proyección de costos</th><th>Observaciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+          <tfoot><tr><td colspan="6">TOTAL</td><td id="totMaquinaria">-</td><td></td></tr></tfoot>
+        </table>
+      </div>
+    </div>
+
+  <!-- ===================== DOCUMENTACION COMPLETA ===================== -->
+    <div class="slide">
+      <div class="slide-eyebrow">Sección 2</div>
+      <h2>Sujetos con documentación completa</h2>
+      <div class="table-scroll">
+        <table class="data" id="tblDocCompleta">
+          <thead>
+            <tr>
+              <th>Tipo</th><th>Caso Nombre</th><th>Medida ID</th><th>Producto / Medida</th>
+              <th>Acción ID</th><th>Actividad / Acción</th><th>Proyección de costos</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+          <tfoot><tr><td colspan="6">TOTAL</td><td id="totDocCompleta">-</td></tr></tfoot>
+        </table>
+      </div>
+    </div>
+
+  <!-- ===================== ACOMPAÑAMIENTO ===================== -->
+    <div class="slide">
+      <div class="slide-eyebrow">Sección 3</div>
+      <h2>Sujetos con acompañamiento para envío de la documentación</h2>
+      <div class="table-scroll">
+        <table class="data" id="tblAcompanamiento">
+          <thead>
+            <tr><th>Tipo</th><th>Caso Nombre</th><th>Macroregión</th><th>Caso DT</th><th>Caso Mpio</th><th>Caso Dpto</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+  <!-- ===================== REHABILITACION ===================== -->
+    <div class="slide">
+      <div class="slide-eyebrow">Sección 4</div>
+      <h2>Acciones rehabilitación</h2>
+      <div class="table-scroll">
+        <table class="data" id="tblRehabilitacion">
+          <thead>
+            <tr>
+              <th>Tipo</th><th>Caso Nombre</th><th>Medida ID</th><th>Producto / Medida</th>
+              <th>Acción ID</th><th>Actividad / Acción</th><th>Proyección de costos</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+          <tfoot><tr><td colspan="6">TOTAL</td><td id="totRehabilitacion">-</td></tr></tfoot>
+        </table>
+      </div>
+    </div>
+
+  <!-- ===================== CONTACTABILIDAD ===================== -->
+    <div class="slide">
+      <div class="slide-eyebrow">Sección 5</div>
+      <h2>Seguimiento de Contactabilidad</h2>
+
+      <div class="kpi-row">
+        <div class="kpi sin"><div class="kpi-label">Sin respuesta</div><div class="kpi-value" id="kpiSin">-</div></div>
+        <div class="kpi con"><div class="kpi-label">Con respuesta</div><div class="kpi-value" id="kpiCon">-</div></div>
+        <div class="kpi"><div class="kpi-label">Total general</div><div class="kpi-value" id="kpiTotal">-</div></div>
+        <div class="kpi pct"><div class="kpi-label">% con respuesta</div><div class="kpi-value" id="kpiPct">-</div></div>
+      </div>
+
+      <div class="contact-grid">
+        <div class="table-scroll">
+          <table class="data" id="tblContactabilidad">
+            <thead><tr><th>Zona</th><th>Sin respuesta</th><th>Con respuesta</th><th>Total</th></tr></thead>
+            <tbody></tbody>
+            <tfoot><tr><td>TOTAL GENERAL</td><td id="totSin">-</td><td id="totCon">-</td><td id="totGeneral">-</td></tr></tfoot>
+          </table>
+        </div>
+        <div class="chart-wrap">
+          <div style="font-size:13px; font-weight:700; color:var(--navy); margin-bottom:8px;">Comparativo por zona</div>
+          <div id="barChart"></div>
+          <div class="legend"><span class="l-sin">Sin respuesta</span><span class="l-con">Con respuesta</span></div>
+        </div>
+      </div>
+
+      <div class="insight" id="insightText">Cargando análisis…</div>
+    </div>
+
+  <!-- ===================== MAPA COLOMBIA ===================== -->
+    <div class="slide">
+      <div class="slide-eyebrow">Sección 6</div>
+      <h2>Mapa de implementación por departamento</h2>
+      <p class="subtitle">Departamentos donde se están adelantando acciones del PIRC, independientemente de su estado de implementación.</p>
+      <p class="source-note" id="sourceNoteMapa">Fuente: Insumo_Sujetos (datos de ejemplo)</p>
+
+      <div class="map-kpi-strip">
+        <div class="kpi"><div class="kpi-label">Departamentos activos</div><div class="kpi-value" id="kpiDeptos">-</div></div>
+        <div class="kpi"><div class="kpi-label">Municipios</div><div class="kpi-value" id="kpiMunis">-</div></div>
+        <div class="kpi"><div class="kpi-label">Sujetos de reparación</div><div class="kpi-value" id="kpiSujetos">-</div></div>
+        <div class="kpi"><div class="kpi-label">Acciones registradas</div><div class="kpi-value" id="kpiAcciones">-</div></div>
+      </div>
+
+      <div class="map-layout">
+        <div class="map-panel">
+          <svg id="mapSvg" viewBox="0 0 520 620"></svg>
+          <div class="tooltip" id="tooltip"></div>
+          <div class="legend-scale">
+            <div class="legend-row"><span class="legend-swatch" style="background:var(--inactive)"></span> Sin acciones registradas</div>
+            <div class="legend-row"><span class="legend-swatch" style="background:#AFC6E8"></span> 1-2 acciones</div>
+            <div class="legend-row"><span class="legend-swatch" style="background:#5D8CC9"></span> 3-4 acciones</div>
+            <div class="legend-row"><span class="legend-swatch" style="background:#1F3864"></span> 5+ acciones</div>
+          </div>
+        </div>
+        <div class="dept-list" id="deptList"></div>
+      </div>
+    </div>
+
+  <!-- ===================== GRACIAS ===================== -->
+    <div class="slide thanks">
+      <div class="big">GRACIAS</div>
+    </div>
+
+  </div>
+  <!-- fin #page-informe -->
+
+  <!-- ===================== REGISTRO FOTOGRAFICO (hoja aparte) ===================== -->
+  <div class="page" id="page-fotos">
+    <div class="slide">
+      <div class="slide-eyebrow">Registro fotográfico</div>
+      <h2>Registro fotográfico</h2>
+      <p class="subtitle">Evidencia fotográfica de las acciones por Sujeto de Reparación Colectiva. Para cargar o reemplazar fotos, ve a la hoja de Configuración.</p>
+
+      <div id="photoGallery"></div>
+    </div>
+  </div>
+
+</div>
+<!-- fin .deck -->
+</div>
+<!-- fin .content-area -->
+</div>
+<!-- fin .layout-main -->
+
+<div class="lightbox" id="lightbox">
+  <span class="lightbox-close" id="lightboxClose">&times;</span>
+  <img id="lightboxImg" src="" alt="">
+  <div class="lightbox-caption" id="lightboxCaption"></div>
+</div>
+
+<script>
+/* ============ PIE DE PAGINA (cinta institucional) EN CADA SECCION ============ */
+const FOOTER_LOGO_SRC = "assets/footer.png";
+document.querySelectorAll('.slide').forEach(s=>{
+  const img = document.createElement('img');
+  img.src = FOOTER_LOGO_SRC;
+  img.alt = "";
+  img.className = "slide-footer-logo";
+  s.appendChild(img);
+});
+</script>
+
+<script>
+/* ============ NAVEGACION DE HOJAS (sidebar) ============ */
+function navigateTo(pageId){
+  document.querySelectorAll('.sidebar button[data-page]').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const btn = document.querySelector('.sidebar button[data-page="'+pageId+'"]');
+  if(btn) btn.classList.add('active');
+  const pg = document.getElementById('page-'+pageId);
+  if(pg) pg.classList.add('active');
+  // Si se navega a una sub-página de Configuración, mantener el submenú abierto y resaltar el padre
+  const isConfigSub = btn && btn.classList.contains('nav-sub');
+  document.getElementById('btnConfigParent').classList.toggle('active', !!isConfigSub);
+  if(isConfigSub){
+    document.getElementById('configSubmenu').classList.add('open');
+    document.getElementById('configCaret').classList.add('open');
+  }
+}
+document.querySelectorAll('.sidebar button[data-page]').forEach(btn=>{
+  btn.addEventListener('click', ()=> navigateTo(btn.dataset.page));
+});
+/* Toggle del submenú de Configuración */
+document.getElementById('btnConfigParent').addEventListener('click', ()=>{
+  const sub = document.getElementById('configSubmenu');
+  const caret = document.getElementById('configCaret');
+  sub.classList.toggle('open');
+  caret.classList.toggle('open');
+});
+/* Estado inicial: submenú abierto, sub-item Configuración activo, padre resaltado */
+document.getElementById('configCaret').classList.add('open');
+document.getElementById('btnConfigParent').classList.add('active');
+
+/* ============ NOMBRES PERSONALIZABLES DE LAS HOJAS ============ */
+function setTabName(page, name){
+  const btn = document.querySelector('.sidebar button[data-page="'+page+'"]');
+  if(btn) btn.textContent = name || btn.dataset.default;
+}
+document.querySelectorAll('.sidebar button[data-page]').forEach(b => b.dataset.default = b.textContent);
+document.getElementById('tabNameInforme').addEventListener('input', e => setTabName('informe', e.target.value));
+document.getElementById('tabNameFotos').addEventListener('input', e => setTabName('fotos', e.target.value));
+
+/* ============ FECHA DE CORTE ============ */
+function formatFechaCorte(iso){
+  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const [y,m,d] = iso.split('-').map(Number);
+  return `${d} de ${meses[m-1]} de ${y}`;
+}
+function updateFechaCorte(iso){
+  const label = formatFechaCorte(iso);
+  document.querySelectorAll('.fecha-corte-display').forEach(el => el.textContent = label);
+}
+document.getElementById('fechaCorteInput').addEventListener('change', e=>{
+  updateFechaCorte(e.target.value);
+});
+updateFechaCorte(document.getElementById('fechaCorteInput').value);
+
+/* ============ LOGO PERSONALIZADO ============ */
+document.getElementById('logoInput').addEventListener('change', function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt){
+    const dataUrl = evt.target.result;
+
+    // Topbar: reemplaza los logos de texto por la imagen cargada
+    const topbarImg = document.getElementById('customLogo');
+    topbarImg.src = dataUrl;
+    topbarImg.style.display = 'inline-block';
+    document.getElementById('textLogos').style.display = 'none';
+
+    // Portada: muestra la misma imagen
+    const coverImg = document.getElementById('customLogoCover');
+    coverImg.src = dataUrl;
+    coverImg.style.display = 'block';
+
+    // Vista previa en el panel de configuración
+    document.getElementById('logoPreview').src = dataUrl;
+    document.getElementById('logoPreview').style.display = 'inline-block';
+    document.getElementById('logoPh').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+});
+
+/* ============ RENDER TABLAS DEL INFORME ============ */
+const money = v => (v===null||v===undefined||v==='') ? '<span style="color:#aaa">Pendiente</span>'
+  : '$ ' + Number(v).toLocaleString('es-CO', {maximumFractionDigits:0});
+const sumCol = (rows, key) => rows.reduce((a,r)=> a + (isFinite(r[key]) ? Number(r[key]) : 0), 0);
+function emptyRow(colspan, label){ return `<tr class="empty-row"><td colspan="${colspan}">${label}</td></tr>`; }
+
+function renderMaquinaria(rows){
+  const tbody = document.querySelector('#tblMaquinaria tbody');
+  if(!rows || !rows.length){ tbody.innerHTML = emptyRow(8,'Sin datos cargados'); document.getElementById('totMaquinaria').textContent='-'; return; }
+  tbody.innerHTML = rows.map(r => `<tr>
+    <td>${r['ID']??''}</td><td>${r['Caso Nombre']??''}</td><td>${r['Medida']??''}</td>
+    <td>${r['Producto / Medida']??''}</td><td>${r['Accion']??''}</td><td>${r['Actividad / Accion']??''}</td>
+    <td>${money(r['Proyeccion de costos'])}</td><td>${r['Observaciones']??''}</td>
+  </tr>`).join('');
+  document.getElementById('totMaquinaria').innerHTML = money(sumCol(rows,'Proyeccion de costos'));
+}
+function renderDocCompleta(rows){
+  const tbody = document.querySelector('#tblDocCompleta tbody');
+  if(!rows || !rows.length){ tbody.innerHTML = emptyRow(7,'Sin datos cargados'); document.getElementById('totDocCompleta').textContent='-'; return; }
+  tbody.innerHTML = rows.map(r => `<tr>
+    <td>${r['Tipo']??''}</td><td>${r['Caso Nombre']??''}</td><td>${r['Medida ID']??''}</td>
+    <td>${r['Producto / Medida']??''}</td><td>${r['Accion ID']??''}</td><td>${r['Actividad / Accion']??''}</td>
+    <td>${money(r['Proyeccion de costos'])}</td>
+  </tr>`).join('');
+  document.getElementById('totDocCompleta').innerHTML = money(sumCol(rows,'Proyeccion de costos'));
+}
+function renderAcompanamiento(rows){
+  const tbody = document.querySelector('#tblAcompanamiento tbody');
+  if(!rows || !rows.length){ tbody.innerHTML = emptyRow(6,'Sin datos cargados'); return; }
+  tbody.innerHTML = rows.map(r => `<tr>
+    <td>${r['Tipo']??''}</td><td>${r['Caso Nombre']??''}</td><td>${r['Macroregion']??''}</td>
+    <td>${r['Caso DT']??''}</td><td>${r['Caso Mpio']??''}</td><td>${r['Caso Dpto']??''}</td>
+  </tr>`).join('');
+}
+function renderRehabilitacion(rows){
+  const tbody = document.querySelector('#tblRehabilitacion tbody');
+  if(!rows || !rows.length){ tbody.innerHTML = emptyRow(7,'Sin datos cargados'); document.getElementById('totRehabilitacion').textContent='-'; return; }
+  tbody.innerHTML = rows.map(r => `<tr>
+    <td>${r['Tipo']??''}</td><td>${r['Caso Nombre']??''}</td><td>${r['Medida ID']??''}</td>
+    <td>${r['Producto / Medida']??''}</td><td>${r['Accion ID']??''}</td><td>${r['Actividad / Accion']??''}</td>
+    <td>${money(r['Proyeccion de costos'])}</td>
+  </tr>`).join('');
+  document.getElementById('totRehabilitacion').innerHTML = money(sumCol(rows,'Proyeccion de costos'));
+}
+function renderContactabilidad(rows){
+  const tbody = document.querySelector('#tblContactabilidad tbody');
+  const bar = document.getElementById('barChart');
+  if(!rows || !rows.length){
+    tbody.innerHTML = emptyRow(4,'Sin datos cargados');
+    ['totSin','totCon','totGeneral','kpiSin','kpiCon','kpiTotal','kpiPct'].forEach(id=>document.getElementById(id).textContent='-');
+    bar.innerHTML = '';
+    document.getElementById('insightText').textContent = 'Carga un Excel con la hoja Seguimiento_Contactabilidad para ver el análisis.';
+    return;
+  }
+  let totSin=0, totCon=0;
+  const maxVal = Math.max(...rows.map(r => (Number(r['Sin Respuesta'])||0) + (Number(r['Con Respuesta'])||0)), 1);
+  tbody.innerHTML = rows.map(r=>{
+    const sin = Number(r['Sin Respuesta'])||0, con = Number(r['Con Respuesta'])||0;
+    totSin += sin; totCon += con;
+    return `<tr><td>${r['Zona']??''}</td><td>${sin}</td><td>${con}</td><td>${sin+con}</td></tr>`;
+  }).join('');
+  const total = totSin + totCon;
+  const pct = total ? ((totCon/total)*100).toFixed(1) : '0.0';
+  document.getElementById('totSin').textContent = totSin;
+  document.getElementById('totCon').textContent = totCon;
+  document.getElementById('totGeneral').textContent = total;
+  document.getElementById('kpiSin').textContent = totSin;
+  document.getElementById('kpiCon').textContent = totCon;
+  document.getElementById('kpiTotal').textContent = total;
+  document.getElementById('kpiPct').textContent = pct + '%';
+  bar.innerHTML = rows.map(r=>{
+    const sin = Number(r['Sin Respuesta'])||0, con = Number(r['Con Respuesta'])||0;
+    const wSin = (sin/maxVal*100).toFixed(1), wCon = (con/maxVal*100).toFixed(1);
+    return `<div class="bar-row">
+      <div class="zlabel">${r['Zona']??''}</div>
+      <div class="bar-track"><div class="bar-sin" style="width:${wSin}%"></div><div class="bar-con" style="width:${wCon}%"></div></div>
+      <div class="bar-nums">${sin} / ${con}</div>
+    </div>`;
+  }).join('');
+  let maxZoneRow = rows.reduce((a,b)=> (Number(b['Con Respuesta'])||0) > (Number(a['Con Respuesta'])||0) ? b : a, rows[0]);
+  document.getElementById('insightText').innerHTML =
+    `De un total de <b>${total}</b> respuestas, <b>${totCon}</b> tienen respuesta (<b>${pct}%</b>). `+
+    `La <b>${maxZoneRow['Zona']}</b> tiene el mayor número de respuestas con <b>${maxZoneRow['Con Respuesta']}</b>.`;
+}
+function sheetToRows(wb, name){
+  if(!wb.Sheets[name]) return null;
+  return XLSX.utils.sheet_to_json(wb.Sheets[name], {defval:null});
+}
+function renderInformeAll(wb){
+  const m = sheetToRows(wb,'Maquinaria_Amarilla'); if(m) renderMaquinaria(m);
+  const d = sheetToRows(wb,'Documentacion_Completa'); if(d) renderDocCompleta(d);
+  const a = sheetToRows(wb,'Acompanamiento_Documentacion'); if(a) renderAcompanamiento(a);
+  const r = sheetToRows(wb,'Acciones_Rehabilitacion'); if(r) renderRehabilitacion(r);
+  const c = sheetToRows(wb,'Seguimiento_Contactabilidad'); if(c) renderContactabilidad(c);
+}
+
+/* ============ RENDER MAPA COLOMBIA ============ */
+const GEOJSON = {"type":"FeatureCollection","features":[{"id":0,"type":"Feature","properties":{"name":"CAQUETÁ"},"geometry":{"type":"Polygon","coordinates":[[[-73.66,1.612],[-73.659,1.576],[-73.476,1.362],[-73.414,1.245],[-73.393,1.147],[-73.322,1.08],[-73.078,0.894],[-73.045,0.906],[-72.857,1.043],[-72.87,1.146],[-72.798,1.176],[-72.651,1.172],[-72.508,1.068],[-72.468,1.084],[-72.399,1.002],[-72.269,0.763],[-72.081,0.705],[-72.033,0.664],[-71.982,0.629],[-71.99,0.566],[-71.929,0.544],[-71.922,0.459],[-71.857,0.456],[-71.832,0.339],[-71.77,0.328],[-71.698,0.238],[-71.627,0.216],[-71.584,0.163],[-71.449,0.14],[-71.374,0.174],[-71.297,0.075],[-71.254,0.059],[-71.272,0.035],[-71.475,-0.012],[-71.549,0.022],[-71.705,-0.067],[-71.737,-0.164],[-71.711,-0.232],[-71.789,-0.271],[-72.02,-0.263],[-72.062,-0.325],[-72.143,-0.348],[-72.184,-0.462],[-72.23,-0.493],[-72.242,-0.605],[-72.317,-0.652],[-72.433,-0.567],[-72.539,-0.677],[-72.592,-0.693],[-72.745,-0.561],[-72.878,-0.618],[-72.956,-0.563],[-73.044,-0.535],[-73.113,-0.604],[-73.209,-0.624],[-73.335,-0.506],[-73.489,-0.528],[-73.571,-0.516],[-73.58,-0.455],[-73.677,-0.422],[-73.841,-0.398],[-73.999,-0.344],[-74.109,-0.236],[-74.157,-0.261],[-74.29,-0.198],[-74.352,-0.107],[-74.44,-0.075],[-74.541,-0.121],[-74.704,0.037],[-74.662,0.054],[-74.678,0.161],[-74.737,0.209],[-74.845,0.214],[-74.893,0.249],[-74.965,0.245],[-75.033,0.484],[-75.196,0.479],[-75.235,0.566],[-75.207,0.602],[-75.257,0.702],[-75.338,0.768],[-75.423,0.738],[-75.539,0.79],[-75.637,0.877],[-75.758,0.837],[-75.895,0.935],[-75.976,1.062],[-76.085,1.058],[-76.152,1.109],[-76.281,1.137],[-76.303,1.237],[-76.204,1.353],[-76.169,1.589],[-76.124,1.566],[-76.035,1.582],[-75.904,1.716],[-75.847,1.722],[-75.735,1.787],[-75.659,1.892],[-75.616,1.996],[-75.535,2.118],[-75.445,2.144],[-75.386,2.315],[-75.31,2.362],[-75.287,2.41],[-75.133,2.596],[-75.147,2.723],[-75.07,2.745],[-74.899,2.964],[-74.879,2.914],[-74.803,2.936],[-74.762,2.873],[-74.671,2.888],[-74.637,2.71],[-74.589,2.662],[-74.681,2.554],[-74.672,2.449],[-74.742,2.324],[-74.743,2.27],[-74.65,2.243],[-74.594,2.135],[-74.644,2.095],[-74.561,1.963],[-74.563,1.848],[-74.47,1.807],[-74.322,1.788],[-74.207,1.716],[-74.105,1.691],[-73.994,1.639],[-73.858,1.608],[-73.739,1.638],[-73.66,1.612]]]}},{"id":1,"type":"Feature","properties":{"name":"CAUCA"},"geometry":{"type":"Polygon","coordinates":[[[-76.056,3.223],[-76.091,3.199],[-76.073,3.05],[-76.021,3.005],[-76.029,2.941],[-75.896,2.855],[-75.823,2.835],[-75.806,2.769],[-75.748,2.719],[-75.84,2.558],[-75.823,2.483],[-75.863,2.426],[-75.98,2.503],[-76.034,2.402],[-76.127,2.381],[-76.146,2.294],[-76.122,2.224],[-76.209,2.198],[-76.303,2.284],[-76.385,2.269],[-76.425,2.129],[-76.554,2.14],[-76.589,2.108],[-76.587,2.0],[-76.625,1.974],[-76.588,1.866],[-76.434,1.791],[-76.37,1.732],[-76.381,1.667],[-76.245,1.683],[-76.169,1.589],[-76.204,1.353],[-76.303,1.237],[-76.281,1.137],[-76.152,1.109],[-76.085,1.058],[-76.166,1.03],[-76.213,0.979],[-76.401,0.98],[-76.423,0.96],[-76.544,1.037],[-76.562,1.073],[-76.54,1.204],[-76.586,1.305],[-76.602,1.414],[-76.697,1.444],[-76.886,1.373],[-76.921,1.346],[-76.928,1.483],[-76.834,1.615],[-76.936,1.729],[-77.239,1.658],[-77.33,1.686],[-77.281,1.86],[-77.204,1.952],[-77.332,2.05],[-77.308,2.108],[-77.323,2.222],[-77.46,2.286],[-77.488,2.195],[-77.554,2.202],[-77.734,2.134],[-77.835,2.176],[-77.848,2.26],[-77.917,2.412],[-77.929,2.641],[-77.908,2.681],[-77.79,2.73],[-77.736,2.787],[-77.671,2.936],[-77.691,3.0],[-77.562,3.163],[-77.498,3.216],[-77.43,3.254],[-77.347,3.14],[-77.316,3.174],[-77.234,3.108],[-77.101,3.185],[-76.938,3.114],[-76.909,3.201],[-76.811,3.207],[-76.677,3.099],[-76.546,3.106],[-76.493,3.176],[-76.456,3.326],[-76.343,3.28],[-76.229,3.277],[-76.191,3.227],[-76.056,3.223]]]}},{"id":2,"type":"Feature","properties":{"name":"PUTUMAYO"},"geometry":{"type":"Polygon","coordinates":[[[-76.085,1.058],[-75.976,1.062],[-75.895,0.935],[-75.758,0.837],[-75.637,0.877],[-75.539,0.79],[-75.423,0.738],[-75.338,0.768],[-75.257,0.702],[-75.207,0.602],[-75.235,0.566],[-75.196,0.479],[-75.033,0.484],[-74.965,0.245],[-74.893,0.249],[-74.845,0.214],[-74.737,0.209],[-74.678,0.161],[-74.662,0.054],[-74.704,0.037],[-74.541,-0.121],[-74.44,-0.075],[-74.352,-0.107],[-74.29,-0.198],[-74.157,-0.261],[-74.109,-0.236],[-73.999,-0.344],[-73.841,-0.398],[-74.389,-0.553],[-74.538,-0.463],[-74.576,-0.396],[-74.726,-0.35],[-74.778,-0.209],[-74.855,-0.243],[-74.928,-0.229],[-75.069,-0.095],[-75.202,-0.045],[-75.276,-0.127],[-75.392,-0.102],[-75.57,-0.03],[-75.633,0.045],[-75.74,0.032],[-75.822,0.083],[-75.955,0.202],[-76.01,0.298],[-76.133,0.37],[-76.2,0.373],[-76.313,0.433],[-76.337,0.385],[-76.412,0.379],[-76.412,0.241],[-76.584,0.22],[-76.619,0.256],[-76.733,0.288],[-76.849,0.24],[-77.08,0.287],[-77.113,0.373],[-77.09,0.426],[-77.13,0.525],[-77.128,0.602],[-77.187,0.63],[-77.117,0.901],[-77.028,0.995],[-77.084,1.062],[-77.089,1.183],[-76.981,1.223],[-76.921,1.346],[-76.886,1.373],[-76.697,1.444],[-76.602,1.414],[-76.586,1.305],[-76.54,1.204],[-76.562,1.073],[-76.544,1.037],[-76.423,0.96],[-76.401,0.98],[-76.213,0.979],[-76.166,1.03],[-76.085,1.058]]]}},{"id":3,"type":"Feature","properties":{"name":"VALLE DEL CAUCA"},"geometry":{"type":"Polygon","coordinates":[[[-75.714,4.713],[-75.707,4.657],[-75.825,4.664],[-75.867,4.608],[-75.888,4.431],[-75.803,4.396],[-75.787,4.294],[-75.823,4.229],[-75.84,4.101],[-75.752,4.077],[-75.807,3.931],[-75.862,3.874],[-75.922,3.739],[-75.955,3.714],[-75.993,3.609],[-75.985,3.559],[-76.027,3.487],[-76.062,3.355],[-76.038,3.301],[-76.056,3.223],[-76.191,3.227],[-76.229,3.277],[-76.343,3.28],[-76.456,3.326],[-76.493,3.176],[-76.546,3.106],[-76.677,3.099],[-76.811,3.207],[-76.909,3.201],[-76.938,3.114],[-77.101,3.185],[-77.234,3.108],[-77.316,3.174],[-77.347,3.14],[-77.43,3.254],[-77.498,3.216],[-77.55,3.231],[-77.48,3.323],[-77.337,3.448],[-77.367,3.484],[-77.301,3.57],[-77.228,3.583],[-77.184,3.655],[-77.198,3.746],[-77.181,3.832],[-77.283,3.842],[-77.318,3.95],[-77.212,4.009],[-77.243,4.084],[-77.314,4.029],[-77.359,3.926],[-77.45,4.039],[-77.353,4.198],[-77.307,4.165],[-77.159,4.183],[-77.05,4.095],[-76.994,4.121],[-76.915,4.096],[-76.867,4.033],[-76.681,3.965],[-76.589,3.993],[-76.499,4.064],[-76.445,4.175],[-76.527,4.288],[-76.562,4.37],[-76.386,4.481],[-76.286,4.712],[-76.313,4.75],[-76.211,4.83],[-76.145,4.838],[-76.089,4.946],[-76.078,5.047],[-75.988,4.874],[-75.936,4.809],[-75.791,4.718],[-75.714,4.713]]]}},{"id":4,"type":"Feature","properties":{"name":"GUAINÍA"},"geometry":{"type":"Polygon","coordinates":[[[-69.845,1.714],[-69.902,1.742],[-70.055,1.777],[-70.181,1.886],[-70.115,1.999],[-70.11,2.081],[-70.101,2.118],[-69.996,2.224],[-70.071,2.291],[-70.189,2.232],[-70.252,2.264],[-70.311,2.208],[-70.427,2.268],[-70.497,2.234],[-70.562,2.293],[-70.63,2.312],[-70.707,2.472],[-70.766,2.539],[-70.848,2.568],[-70.917,2.56],[-70.942,2.606],[-70.502,2.788],[-70.351,2.86],[-70.356,2.904],[-70.28,2.935],[-70.256,3.039],[-70.284,3.129],[-70.247,3.176],[-70.128,3.204],[-70.158,3.282],[-70.112,3.386],[-70.034,3.418],[-69.998,3.373],[-69.874,3.433],[-69.872,3.536],[-69.776,3.566],[-69.691,3.544],[-69.579,3.604],[-69.56,3.678],[-69.424,3.667],[-69.32,3.696],[-69.128,3.673],[-69.056,3.639],[-69.012,3.682],[-68.782,3.729],[-68.709,3.768],[-68.589,3.777],[-68.574,3.811],[-68.454,3.838],[-68.421,3.926],[-68.347,3.924],[-68.314,3.978],[-68.232,3.973],[-68.043,4.012],[-67.879,3.918],[-67.819,3.979],[-67.708,4.045],[-67.692,3.936],[-67.613,3.755],[-67.501,3.768],[-67.439,3.64],[-67.444,3.585],[-67.402,3.48],[-67.34,3.451],[-67.313,3.394],[-67.335,3.335],[-67.862,2.865],[-67.822,2.827],[-67.658,2.797],[-67.621,2.814],[-67.562,2.721],[-67.569,2.668],[-67.486,2.667],[-67.471,2.625],[-67.344,2.524],[-67.298,2.443],[-67.188,2.351],[-67.221,2.25],[-67.162,2.133],[-67.114,2.134],[-67.097,2.051],[-67.123,1.98],[-67.072,1.934],[-67.034,1.787],[-66.963,1.667],[-66.964,1.597],[-66.921,1.532],[-66.912,1.427],[-66.856,1.369],[-66.881,1.29],[-66.857,1.228],[-67.089,1.166],[-67.101,1.26],[-67.156,1.317],[-67.075,1.373],[-67.079,1.473],[-67.113,1.595],[-67.144,1.605],[-67.134,1.796],[-67.2,1.851],[-67.227,1.912],[-67.303,1.901],[-67.347,1.985],[-67.357,2.112],[-67.33,2.146],[-67.369,2.216],[-67.45,2.169],[-67.587,2.122],[-67.602,2.043],[-67.677,2.009],[-67.775,2.012],[-67.884,1.895],[-67.908,1.804],[-68.103,1.908],[-68.145,1.973],[-68.205,1.988],[-68.285,1.836],[-68.232,1.82],[-68.163,1.727],[-68.813,1.727],[-69.394,1.726],[-69.535,1.777],[-69.645,1.73],[-69.845,1.714]]]}},{"id":5,"type":"Feature","properties":{"name":"VICHADA"},"geometry":{"type":"Polygon","coordinates":[[[-67.708,4.045],[-67.819,3.979],[-67.879,3.918],[-68.043,4.012],[-68.232,3.973],[-68.314,3.978],[-68.347,3.924],[-68.421,3.926],[-68.454,3.838],[-68.574,3.811],[-68.589,3.777],[-68.709,3.768],[-68.782,3.729],[-69.012,3.682],[-69.056,3.639],[-69.128,3.673],[-69.32,3.696],[-69.424,3.667],[-69.56,3.678],[-69.579,3.604],[-69.691,3.544],[-69.776,3.566],[-69.872,3.536],[-69.874,3.433],[-69.998,3.373],[-70.034,3.418],[-70.112,3.386],[-70.158,3.282],[-70.128,3.204],[-70.247,3.176],[-70.284,3.129],[-70.256,3.039],[-70.28,2.935],[-70.356,2.904],[-70.351,2.86],[-70.502,2.788],[-70.584,2.84],[-70.721,2.75],[-70.822,2.813],[-70.936,2.788],[-70.959,2.843],[-71.055,2.852],[-71.077,2.883],[-71.078,3.295],[-71.078,3.973],[-71.078,4.899],[-71.002,4.98],[-70.942,5.126],[-70.865,5.143],[-70.694,5.283],[-70.678,5.364],[-70.358,5.587],[-70.264,5.564],[-70.153,5.601],[-70.057,5.702],[-69.848,5.999],[-69.836,6.041],[-69.536,6.046],[-69.428,6.108],[-69.345,6.145],[-69.31,6.09],[-69.237,6.08],[-69.123,6.192],[-69.044,6.222],[-68.876,6.167],[-68.831,6.18],[-68.643,6.129],[-68.597,6.163],[-68.379,6.186],[-68.296,6.166],[-68.258,6.197],[-68.094,6.232],[-68.026,6.197],[-67.925,6.24],[-67.835,6.317],[-67.769,6.295],[-67.615,6.287],[-67.534,6.259],[-67.457,6.189],[-67.494,6.127],[-67.412,6.011],[-67.589,5.839],[-67.631,5.733],[-67.637,5.645],[-67.599,5.545],[-67.625,5.477],[-67.801,5.358],[-67.85,5.304],[-67.823,5.247],[-67.855,5.138],[-67.806,5.055],[-67.838,4.948],[-67.818,4.707],[-67.845,4.645],[-67.857,4.525],[-67.791,4.467],[-67.764,4.361],[-67.806,4.315],[-67.797,4.23],[-67.708,4.045]]]}},{"id":6,"type":"Feature","properties":{"name":"CASANARE"},"geometry":{"type":"Polygon","coordinates":[[[-69.836,6.041],[-69.848,5.999],[-70.057,5.702],[-70.153,5.601],[-70.264,5.564],[-70.358,5.587],[-70.678,5.364],[-70.694,5.283],[-70.865,5.143],[-70.942,5.126],[-71.002,4.98],[-71.078,4.899],[-71.212,4.817],[-71.579,4.674],[-71.598,4.645],[-71.736,4.574],[-71.814,4.574],[-71.868,4.505],[-71.999,4.382],[-72.158,4.442],[-72.304,4.407],[-72.405,4.318],[-72.554,4.336],[-72.58,4.301],[-72.77,4.333],[-72.772,4.37],[-72.897,4.475],[-72.968,4.599],[-73.017,4.635],[-73.053,4.737],[-73.077,4.812],[-73.015,5.002],[-72.971,4.98],[-72.903,5.068],[-72.973,5.146],[-72.897,5.26],[-72.88,5.35],[-72.812,5.383],[-72.688,5.282],[-72.502,5.445],[-72.397,5.57],[-72.301,5.507],[-72.288,5.606],[-72.226,5.668],[-72.31,5.794],[-72.459,5.851],[-72.416,5.903],[-72.326,5.935],[-72.366,6.037],[-72.375,6.15],[-72.412,6.188],[-72.371,6.32],[-72.339,6.346],[-72.367,6.307],[-72.344,6.227],[-72.293,6.204],[-72.278,6.136],[-72.138,6.067],[-71.961,6.167],[-71.88,6.16],[-71.777,6.193],[-71.667,6.192],[-71.534,6.214],[-71.488,6.202],[-71.417,6.243],[-71.345,6.232],[-71.219,6.299],[-71.097,6.277],[-70.984,6.229],[-70.787,6.251],[-70.723,6.217],[-70.557,6.245],[-70.531,6.23],[-70.38,6.302],[-70.313,6.28],[-70.199,6.295],[-70.121,6.258],[-70.03,6.162],[-69.983,6.158],[-69.836,6.041]]]}},{"id":7,"type":"Feature","properties":{"name":"AMAZONAS"},"geometry":{"type":"Polygon","coordinates":[[[-69.433,-1.069],[-69.396,-1.137],[-69.429,-1.235],[-69.399,-1.366],[-69.428,-1.387],[-69.535,-2.002],[-69.668,-2.746],[-69.767,-3.299],[-69.934,-4.22],[-69.983,-4.19],[-70.089,-4.065],[-70.177,-4.035],[-70.183,-3.928],[-70.248,-3.895],[-70.279,-3.827],[-70.355,-3.801],[-70.486,-3.876],[-70.564,-3.824],[-70.653,-3.829],[-70.713,-3.796],[-70.439,-3.362],[-70.061,-2.76],[-70.076,-2.664],[-70.219,-2.657],[-70.26,-2.555],[-70.374,-2.498],[-70.439,-2.526],[-70.503,-2.478],[-70.629,-2.479],[-70.663,-2.359],[-70.841,-2.291],[-70.869,-2.228],[-70.936,-2.258],[-70.981,-2.214],[-71.037,-2.276],[-71.132,-2.289],[-71.127,-2.338],[-71.193,-2.383],[-71.23,-2.348],[-71.317,-2.38],[-71.399,-2.359],[-71.45,-2.285],[-71.608,-2.238],[-71.629,-2.21],[-71.732,-2.225],[-71.72,-2.165],[-71.833,-2.197],[-71.915,-2.368],[-72.016,-2.369],[-72.049,-2.339],[-72.121,-2.405],[-72.366,-2.493],[-72.4,-2.435],[-72.525,-2.422],[-72.632,-2.359],[-72.693,-2.452],[-72.763,-2.4],[-72.906,-2.445],[-72.983,-2.344],[-73.054,-2.367],[-73.157,-2.26],[-73.094,-2.044],[-73.121,-2.016],[-73.109,-1.884],[-73.157,-1.853],[-73.209,-1.758],[-73.335,-1.804],[-73.507,-1.732],[-73.541,-1.699],[-73.464,-1.589],[-73.507,-1.487],[-73.583,-1.376],[-73.632,-1.272],[-73.683,-1.241],[-73.774,-1.262],[-73.869,-1.225],[-73.905,-1.128],[-73.97,-1.126],[-74.027,-1.065],[-74.274,-0.98],[-74.267,-0.827],[-74.378,-0.64],[-74.389,-0.553],[-73.841,-0.398],[-73.677,-0.422],[-73.58,-0.455],[-73.571,-0.516],[-73.489,-0.528],[-73.335,-0.506],[-73.209,-0.624],[-73.113,-0.604],[-73.044,-0.535],[-72.956,-0.563],[-72.878,-0.618],[-72.745,-0.561],[-72.592,-0.693],[-72.539,-0.677],[-72.433,-0.567],[-72.317,-0.652],[-72.242,-0.605],[-72.23,-0.493],[-72.184,-0.462],[-72.143,-0.348],[-72.062,-0.325],[-72.02,-0.263],[-71.789,-0.271],[-71.711,-0.232],[-71.737,-0.164],[-71.705,-0.067],[-71.549,0.022],[-71.475,-0.012],[-71.272,0.035],[-71.254,0.059],[-71.185,0.097],[-71.137,0.007],[-70.999,-0.003],[-70.897,-0.103],[-70.945,-0.159],[-70.885,-0.211],[-70.879,-0.281],[-70.827,-0.365],[-70.739,-0.287],[-70.666,-0.35],[-70.637,-0.32],[-70.564,-0.37],[-70.517,-0.36],[-70.437,-0.478],[-70.268,-0.418],[-70.245,-0.47],[-70.32,-0.55],[-70.264,-0.582],[-70.252,-0.745],[-70.291,-0.807],[-70.225,-0.895],[-70.302,-0.978],[-70.238,-1.021],[-70.178,-1.1],[-70.127,-1.11],[-70.045,-0.98],[-69.961,-0.968],[-69.936,-1.096],[-69.839,-1.028],[-69.705,-1.048],[-69.68,-1.203],[-69.592,-1.146],[-69.566,-1.192],[-69.482,-1.214],[-69.433,-1.069]]]}},{"id":8,"type":"Feature","properties":{"name":"VAUPÉS"},"geometry":{"type":"Polygon","coordinates":[[[-70.11,2.081],[-70.115,1.999],[-70.181,1.886],[-70.055,1.777],[-69.902,1.742],[-69.845,1.714],[-69.847,1.078],[-69.745,1.114],[-69.674,1.07],[-69.381,1.074],[-69.322,1.088],[-69.199,0.996],[-69.14,0.69],[-69.199,0.616],[-69.358,0.617],[-69.434,0.712],[-69.482,0.736],[-69.634,0.637],[-69.688,0.664],[-69.723,0.616],[-69.936,0.554],[-70.046,0.564],[-70.047,-0.11],[-70.066,-0.164],[-69.902,-0.338],[-69.83,-0.362],[-69.71,-0.454],[-69.612,-0.5],[-69.572,-0.633],[-69.612,-0.766],[-69.526,-0.869],[-69.528,-0.919],[-69.43,-1.016],[-69.433,-1.069],[-69.482,-1.214],[-69.566,-1.192],[-69.592,-1.146],[-69.68,-1.203],[-69.705,-1.048],[-69.839,-1.028],[-69.936,-1.096],[-69.961,-0.968],[-70.045,-0.98],[-70.127,-1.11],[-70.178,-1.1],[-70.238,-1.021],[-70.302,-0.978],[-70.225,-0.895],[-70.291,-0.807],[-70.252,-0.745],[-70.264,-0.582],[-70.32,-0.55],[-70.245,-0.47],[-70.268,-0.418],[-70.437,-0.478],[-70.517,-0.36],[-70.564,-0.37],[-70.637,-0.32],[-70.666,-0.35],[-70.739,-0.287],[-70.827,-0.365],[-70.879,-0.281],[-70.885,-0.211],[-70.945,-0.159],[-70.897,-0.103],[-70.999,-0.003],[-71.137,0.007],[-71.185,0.097],[-71.254,0.059],[-71.297,0.075],[-71.374,0.174],[-71.449,0.14],[-71.584,0.163],[-71.627,0.216],[-71.698,0.238],[-71.77,0.328],[-71.832,0.339],[-71.857,0.456],[-71.922,0.459],[-71.929,0.544],[-71.99,0.566],[-71.982,0.629],[-72.033,0.664],[-71.803,0.888],[-71.74,0.985],[-71.641,0.995],[-71.574,1.082],[-71.547,1.27],[-71.455,1.465],[-71.438,1.546],[-71.39,1.598],[-71.403,1.722],[-71.316,1.715],[-71.259,1.668],[-71.165,1.756],[-70.989,1.824],[-70.895,1.919],[-70.705,1.907],[-70.487,1.949],[-70.442,1.994],[-70.23,2.035],[-70.188,2.024],[-70.11,2.081]]]}},{"id":9,"type":"Feature","properties":{"name":"GUAVIARE"},"geometry":{"type":"Polygon","coordinates":[[[-71.077,2.883],[-71.055,2.852],[-70.959,2.843],[-70.936,2.788],[-70.822,2.813],[-70.721,2.75],[-70.584,2.84],[-70.502,2.788],[-70.942,2.606],[-70.917,2.56],[-70.848,2.568],[-70.766,2.539],[-70.707,2.472],[-70.63,2.312],[-70.562,2.293],[-70.497,2.234],[-70.427,2.268],[-70.311,2.208],[-70.252,2.264],[-70.189,2.232],[-70.071,2.291],[-69.996,2.224],[-70.101,2.118],[-70.11,2.081],[-70.188,2.024],[-70.23,2.035],[-70.442,1.994],[-70.487,1.949],[-70.705,1.907],[-70.895,1.919],[-70.989,1.824],[-71.165,1.756],[-71.259,1.668],[-71.316,1.715],[-71.403,1.722],[-71.39,1.598],[-71.438,1.546],[-71.455,1.465],[-71.547,1.27],[-71.574,1.082],[-71.641,0.995],[-71.74,0.985],[-71.803,0.888],[-72.033,0.664],[-72.081,0.705],[-72.269,0.763],[-72.399,1.002],[-72.468,1.084],[-72.508,1.068],[-72.651,1.172],[-72.798,1.176],[-72.87,1.146],[-72.857,1.043],[-73.045,0.906],[-73.078,0.894],[-73.322,1.08],[-73.393,1.147],[-73.414,1.245],[-73.476,1.362],[-73.659,1.576],[-73.66,1.612],[-73.661,2.294],[-73.632,2.353],[-73.514,2.35],[-73.438,2.383],[-73.299,2.336],[-73.24,2.389],[-73.153,2.367],[-73.066,2.426],[-73.012,2.434],[-72.936,2.503],[-72.922,2.56],[-72.816,2.615],[-72.736,2.571],[-72.7,2.62],[-72.6,2.615],[-72.563,2.682],[-72.486,2.685],[-72.47,2.734],[-72.389,2.736],[-72.359,2.781],[-72.204,2.859],[-72.113,2.875],[-72.046,2.818],[-71.858,2.843],[-71.742,2.884],[-71.652,2.821],[-71.469,2.894],[-71.389,2.845],[-71.329,2.892],[-71.278,2.868],[-71.077,2.883]]]}},{"id":10,"type":"Feature","properties":{"name":"CALDAS"},"geometry":{"type":"Polygon","coordinates":[[[-74.665,5.768],[-74.661,5.752],[-74.627,5.697],[-74.675,5.516],[-74.667,5.405],[-74.735,5.287],[-74.851,5.314],[-74.939,5.313],[-75.057,5.275],[-75.117,5.161],[-75.288,5.138],[-75.344,5.081],[-75.317,5.028],[-75.352,4.939],[-75.324,4.866],[-75.375,4.802],[-75.428,4.816],[-75.483,4.917],[-75.714,4.956],[-75.747,5.047],[-75.814,4.919],[-75.89,4.96],[-75.917,5.079],[-75.802,5.198],[-75.803,5.281],[-75.693,5.255],[-75.648,5.308],[-75.74,5.397],[-75.811,5.361],[-75.858,5.378],[-75.868,5.49],[-75.73,5.564],[-75.69,5.519],[-75.57,5.523],[-75.599,5.737],[-75.479,5.664],[-75.377,5.674],[-75.276,5.419],[-75.221,5.503],[-75.147,5.53],[-75.091,5.586],[-75.099,5.643],[-74.993,5.716],[-74.866,5.747],[-74.807,5.7],[-74.74,5.7],[-74.714,5.769],[-74.665,5.768]]]}},{"id":11,"type":"Feature","properties":{"name":"QUINDIO"},"geometry":{"type":"Polygon","coordinates":[[[-75.388,4.716],[-75.415,4.623],[-75.514,4.556],[-75.578,4.452],[-75.593,4.319],[-75.697,4.132],[-75.752,4.077],[-75.84,4.101],[-75.823,4.229],[-75.787,4.294],[-75.803,4.396],[-75.888,4.431],[-75.867,4.608],[-75.825,4.664],[-75.707,4.657],[-75.714,4.713],[-75.583,4.707],[-75.492,4.666],[-75.388,4.716]]]}},{"id":12,"type":"Feature","properties":{"name":"RISARALDA"},"geometry":{"type":"Polygon","coordinates":[[[-75.868,5.49],[-75.858,5.378],[-75.811,5.361],[-75.74,5.397],[-75.648,5.308],[-75.693,5.255],[-75.803,5.281],[-75.802,5.198],[-75.917,5.079],[-75.89,4.96],[-75.814,4.919],[-75.747,5.047],[-75.714,4.956],[-75.483,4.917],[-75.428,4.816],[-75.375,4.802],[-75.388,4.716],[-75.492,4.666],[-75.583,4.707],[-75.714,4.713],[-75.791,4.718],[-75.936,4.809],[-75.988,4.874],[-76.078,5.047],[-76.06,5.136],[-76.124,5.173],[-76.201,5.322],[-76.19,5.397],[-76.089,5.446],[-76.085,5.534],[-76.009,5.567],[-75.983,5.519],[-75.868,5.49]]]}},{"id":13,"type":"Feature","properties":{"name":"ANTIOQUIA"},"geometry":{"type":"Polygon","coordinates":[[[-74.83,8.2],[-74.785,8.132],[-74.725,8.117],[-74.605,8.038],[-74.519,7.901],[-74.508,7.724],[-74.561,7.646],[-74.568,7.519],[-74.599,7.462],[-74.491,7.343],[-74.414,7.399],[-74.413,7.46],[-74.32,7.44],[-74.398,7.348],[-74.41,7.202],[-74.322,7.019],[-74.246,7.003],[-73.916,7.295],[-73.939,7.182],[-73.888,7.071],[-73.897,6.986],[-74.011,6.913],[-74.115,6.766],[-74.232,6.71],[-74.256,6.675],[-74.359,6.633],[-74.409,6.586],[-74.397,6.452],[-74.451,6.332],[-74.527,6.274],[-74.612,6.126],[-74.562,6.078],[-74.563,6.002],[-74.612,5.966],[-74.59,5.894],[-74.638,5.866],[-74.665,5.768],[-74.714,5.769],[-74.74,5.7],[-74.807,5.7],[-74.866,5.747],[-74.993,5.716],[-75.099,5.643],[-75.091,5.586],[-75.147,5.53],[-75.221,5.503],[-75.276,5.419],[-75.377,5.674],[-75.479,5.664],[-75.599,5.737],[-75.57,5.523],[-75.69,5.519],[-75.73,5.564],[-75.868,5.49],[-75.983,5.519],[-76.009,5.567],[-76.007,5.623],[-76.087,5.689],[-76.063,5.727],[-76.098,5.85],[-76.057,5.896],[-76.105,6.018],[-76.16,6.004],[-76.191,6.059],[-76.21,6.185],[-76.238,6.208],[-76.378,6.193],[-76.42,6.166],[-76.602,6.192],[-76.717,6.171],[-76.718,6.215],[-76.79,6.318],[-76.778,6.489],[-76.899,6.58],[-76.954,6.675],[-76.972,6.798],[-76.876,6.851],[-76.794,6.865],[-76.824,7.005],[-76.676,7.03],[-76.548,7.001],[-76.5,7.169],[-76.531,7.255],[-76.615,7.312],[-76.662,7.449],[-76.801,7.571],[-76.936,7.584],[-76.96,7.64],[-77.123,7.79],[-77.026,7.89],[-76.997,8.019],[-76.938,8.068],[-76.98,8.256],[-76.925,8.025],[-76.922,7.917],[-76.828,7.902],[-76.748,7.922],[-76.734,8.071],[-76.739,8.174],[-76.774,8.268],[-76.758,8.392],[-76.824,8.496],[-76.927,8.542],[-76.886,8.623],[-76.649,8.671],[-76.631,8.73],[-76.544,8.763],[-76.413,8.874],[-76.34,8.641],[-76.266,8.639],[-76.21,8.523],[-76.227,8.381],[-76.288,8.329],[-76.352,8.204],[-76.348,8.155],[-76.429,8.059],[-76.412,8.007],[-76.482,7.821],[-76.494,7.542],[-76.381,7.392],[-75.845,7.347],[-75.742,7.612],[-75.712,7.581],[-75.605,7.585],[-75.474,7.777],[-75.33,7.927],[-75.221,8.066],[-75.193,8.047],[-75.057,8.047],[-74.966,8.09],[-74.928,8.075],[-74.83,8.2]]]}},{"id":14,"type":"Feature","properties":{"name":"CHOCÓ"},"geometry":{"type":"Polygon","coordinates":[[[-76.98,8.256],[-76.938,8.068],[-76.997,8.019],[-77.026,7.89],[-77.123,7.79],[-76.96,7.64],[-76.936,7.584],[-76.801,7.571],[-76.662,7.449],[-76.615,7.312],[-76.531,7.255],[-76.5,7.169],[-76.548,7.001],[-76.676,7.03],[-76.824,7.005],[-76.794,6.865],[-76.876,6.851],[-76.972,6.798],[-76.954,6.675],[-76.899,6.58],[-76.778,6.489],[-76.79,6.318],[-76.718,6.215],[-76.717,6.171],[-76.602,6.192],[-76.42,6.166],[-76.378,6.193],[-76.238,6.208],[-76.21,6.185],[-76.191,6.059],[-76.16,6.004],[-76.105,6.018],[-76.057,5.896],[-76.098,5.85],[-76.063,5.727],[-76.087,5.689],[-76.007,5.623],[-76.009,5.567],[-76.085,5.534],[-76.089,5.446],[-76.19,5.397],[-76.201,5.322],[-76.124,5.173],[-76.06,5.136],[-76.078,5.047],[-76.089,4.946],[-76.145,4.838],[-76.211,4.83],[-76.313,4.75],[-76.286,4.712],[-76.386,4.481],[-76.562,4.37],[-76.527,4.288],[-76.445,4.175],[-76.499,4.064],[-76.589,3.993],[-76.681,3.965],[-76.867,4.033],[-76.915,4.096],[-76.994,4.121],[-77.05,4.095],[-77.159,4.183],[-77.307,4.165],[-77.353,4.198],[-77.45,4.039],[-77.526,4.127],[-77.525,4.257],[-77.428,4.318],[-77.354,4.416],[-77.326,4.569],[-77.313,4.774],[-77.348,4.811],[-77.375,4.959],[-77.387,5.288],[-77.413,5.404],[-77.39,5.443],[-77.472,5.49],[-77.539,5.48],[-77.504,5.585],[-77.422,5.626],[-77.338,5.619],[-77.264,5.716],[-77.256,5.794],[-77.29,5.846],[-77.336,6.001],[-77.455,6.134],[-77.483,6.193],[-77.409,6.228],[-77.359,6.393],[-77.359,6.488],[-77.325,6.549],[-77.397,6.621],[-77.449,6.706],[-77.516,6.657],[-77.57,6.796],[-77.618,6.843],[-77.711,6.88],[-77.663,7.0],[-77.883,7.218],[-77.793,7.461],[-77.702,7.509],[-77.749,7.615],[-77.742,7.678],[-77.647,7.653],[-77.607,7.542],[-77.569,7.508],[-77.493,7.584],[-77.313,7.897],[-77.179,7.917],[-77.219,8.09],[-77.261,8.212],[-77.334,8.274],[-77.386,8.44],[-77.45,8.5],[-77.345,8.645],[-77.287,8.572],[-77.248,8.471],[-77.129,8.409],[-77.036,8.253],[-76.98,8.256]]]}},{"id":15,"type":"Feature","properties":{"name":"NARIÑO"},"geometry":{"type":"Polygon","coordinates":[[[-77.929,2.641],[-77.917,2.412],[-77.848,2.26],[-77.835,2.176],[-77.734,2.134],[-77.554,2.202],[-77.488,2.195],[-77.46,2.286],[-77.323,2.222],[-77.308,2.108],[-77.332,2.05],[-77.204,1.952],[-77.281,1.86],[-77.33,1.686],[-77.239,1.658],[-76.936,1.729],[-76.834,1.615],[-76.928,1.483],[-76.921,1.346],[-76.981,1.223],[-77.089,1.183],[-77.084,1.062],[-77.028,0.995],[-77.117,0.901],[-77.187,0.63],[-77.128,0.602],[-77.13,0.525],[-77.09,0.426],[-77.113,0.373],[-77.297,0.365],[-77.325,0.388],[-77.523,0.416],[-77.522,0.531],[-77.485,0.656],[-77.564,0.652],[-77.697,0.754],[-77.664,0.811],[-77.713,0.851],[-77.867,0.801],[-77.965,0.824],[-78.034,0.88],[-78.197,0.949],[-78.195,0.985],[-78.27,1.047],[-78.314,1.191],[-78.418,1.16],[-78.506,1.197],[-78.544,1.244],[-78.621,1.25],[-78.71,1.359],[-78.79,1.408],[-78.818,1.473],[-78.959,1.594],[-79.007,1.658],[-78.861,1.807],[-78.81,1.829],[-78.717,1.77],[-78.602,1.794],[-78.539,1.858],[-78.599,1.9],[-78.587,1.973],[-78.672,2.031],[-78.713,2.165],[-78.628,2.32],[-78.624,2.372],[-78.55,2.492],[-78.334,2.656],[-78.143,2.681],[-78.073,2.611],[-78.035,2.648],[-77.929,2.641]]]}},{"id":16,"type":"Feature","properties":{"name":"CÓRDOBA"},"geometry":{"type":"Polygon","coordinates":[[[-75.701,9.412],[-75.57,9.279],[-75.458,9.239],[-75.445,9.141],[-75.392,9.159],[-75.281,9.072],[-75.21,9.05],[-75.168,8.952],[-75.245,8.883],[-75.364,8.83],[-75.328,8.737],[-75.352,8.658],[-75.328,8.562],[-75.267,8.487],[-75.213,8.474],[-75.185,8.397],[-75.128,8.469],[-75.042,8.458],[-75.008,8.511],[-74.926,8.5],[-74.874,8.403],[-74.801,8.337],[-74.781,8.278],[-74.83,8.2],[-74.928,8.075],[-74.966,8.09],[-75.057,8.047],[-75.193,8.047],[-75.221,8.066],[-75.33,7.927],[-75.474,7.777],[-75.605,7.585],[-75.712,7.581],[-75.742,7.612],[-75.845,7.347],[-76.381,7.392],[-76.494,7.542],[-76.482,7.821],[-76.412,8.007],[-76.429,8.059],[-76.348,8.155],[-76.352,8.204],[-76.288,8.329],[-76.227,8.381],[-76.21,8.523],[-76.266,8.639],[-76.34,8.641],[-76.413,8.874],[-76.34,8.919],[-76.265,8.998],[-76.251,9.058],[-76.189,9.116],[-76.171,9.23],[-76.102,9.276],[-76.081,9.336],[-75.978,9.376],[-75.949,9.444],[-75.784,9.393],[-75.701,9.412]]]}},{"id":17,"type":"Feature","properties":{"name":"BOLÍVAR"},"geometry":{"type":"Polygon","coordinates":[[[-75.224,10.795],[-75.25,10.723],[-75.223,10.63],[-75.241,10.52],[-75.126,10.399],[-75.082,10.412],[-74.965,10.326],[-74.911,10.254],[-74.945,10.128],[-74.84,10.079],[-74.787,10.008],[-74.873,9.935],[-74.873,9.848],[-74.815,9.785],[-74.803,9.667],[-74.773,9.604],[-74.806,9.553],[-74.737,9.422],[-74.699,9.427],[-74.565,9.312],[-74.514,9.234],[-74.44,9.274],[-74.403,9.214],[-74.342,9.231],[-74.249,9.164],[-74.175,9.075],[-74.104,9.022],[-74.004,9.03],[-73.872,8.961],[-73.868,8.936],[-73.867,8.887],[-73.796,8.818],[-73.79,8.749],[-73.82,8.662],[-73.747,8.466],[-73.775,8.145],[-73.867,8.07],[-73.862,7.972],[-73.831,7.932],[-73.798,7.772],[-73.83,7.728],[-73.798,7.657],[-73.846,7.542],[-73.917,7.472],[-73.895,7.431],[-73.916,7.295],[-74.246,7.003],[-74.322,7.019],[-74.41,7.202],[-74.398,7.348],[-74.32,7.44],[-74.413,7.46],[-74.414,7.399],[-74.491,7.343],[-74.599,7.462],[-74.568,7.519],[-74.561,7.646],[-74.508,7.724],[-74.519,7.901],[-74.605,8.038],[-74.725,8.117],[-74.785,8.132],[-74.83,8.2],[-74.781,8.278],[-74.649,8.314],[-74.54,8.425],[-74.534,8.476],[-74.609,8.73],[-74.54,8.805],[-74.639,8.977],[-74.828,9.061],[-74.864,9.148],[-74.902,9.163],[-74.942,9.351],[-74.912,9.416],[-75.032,9.467],[-75.133,9.596],[-75.279,9.686],[-75.325,9.625],[-75.375,9.657],[-75.336,9.812],[-75.393,9.881],[-75.467,9.909],[-75.491,10.038],[-75.573,10.086],[-75.524,10.173],[-75.562,10.27],[-75.503,10.301],[-75.512,10.572],[-75.396,10.681],[-75.276,10.715],[-75.224,10.795]]]}},{"id":18,"type":"Feature","properties":{"name":"CESAR"},"geometry":{"type":"Polygon","coordinates":[[[-72.901,10.436],[-72.9,10.209],[-72.912,10.115],[-72.999,9.923],[-72.972,9.855],[-73.055,9.679],[-73.085,9.557],[-73.176,9.501],[-73.241,9.403],[-73.299,9.271],[-73.369,9.173],[-73.43,9.102],[-73.411,9.054],[-73.44,8.975],[-73.448,8.862],[-73.411,8.781],[-73.463,8.745],[-73.552,8.606],[-73.531,8.528],[-73.473,8.448],[-73.517,8.396],[-73.457,8.361],[-73.394,8.378],[-73.35,8.334],[-73.405,8.246],[-73.432,8.14],[-73.377,8.106],[-73.366,8.023],[-73.278,7.985],[-73.279,7.936],[-73.351,7.892],[-73.351,7.795],[-73.411,7.716],[-73.481,7.677],[-73.633,7.749],[-73.753,7.751],[-73.75,7.803],[-73.671,7.894],[-73.676,7.943],[-73.764,8.064],[-73.775,8.145],[-73.747,8.466],[-73.82,8.662],[-73.79,8.749],[-73.796,8.818],[-73.867,8.887],[-73.868,8.936],[-73.798,9.059],[-73.864,9.112],[-73.891,9.174],[-73.962,9.188],[-73.943,9.289],[-73.989,9.317],[-73.979,9.39],[-74.137,9.496],[-74.037,9.592],[-73.868,9.6],[-73.803,9.636],[-73.842,9.798],[-73.897,9.837],[-73.959,9.931],[-73.993,9.936],[-74.083,10.07],[-74.065,10.167],[-73.954,10.339],[-73.892,10.391],[-73.78,10.396],[-73.66,10.456],[-73.6,10.576],[-73.594,10.705],[-73.551,10.749],[-73.599,10.836],[-73.48,10.867],[-73.291,10.862],[-73.256,10.826],[-73.263,10.732],[-73.114,10.679],[-73.076,10.637],[-73.099,10.551],[-73.175,10.481],[-73.127,10.399],[-73.088,10.425],[-72.987,10.4],[-72.901,10.436]]]}},{"id":19,"type":"Feature","properties":{"name":"LA GUAJIRA"},"geometry":{"type":"Polygon","coordinates":[[[-72.901,10.436],[-72.987,10.4],[-73.088,10.425],[-73.127,10.399],[-73.175,10.481],[-73.099,10.551],[-73.076,10.637],[-73.114,10.679],[-73.263,10.732],[-73.256,10.826],[-73.291,10.862],[-73.48,10.867],[-73.599,10.836],[-73.665,10.99],[-73.628,11.142],[-73.584,11.189],[-73.575,11.26],[-73.362,11.263],[-73.276,11.286],[-73.143,11.408],[-73.025,11.494],[-72.884,11.564],[-72.826,11.636],[-72.723,11.7],[-72.459,11.777],[-72.237,11.886],[-72.138,12.104],[-72.143,12.239],[-71.964,12.257],[-71.995,12.186],[-71.96,12.15],[-71.86,12.211],[-71.928,12.298],[-71.86,12.356],[-71.805,12.305],[-71.691,12.366],[-71.624,12.44],[-71.542,12.44],[-71.283,12.343],[-71.225,12.273],[-71.115,12.086],[-71.136,12.003],[-71.235,11.953],[-71.378,11.812],[-71.611,11.746],[-71.802,11.68],[-71.972,11.647],[-72.246,11.145],[-72.349,11.151],[-72.485,11.099],[-72.485,11.062],[-72.58,10.911],[-72.638,10.885],[-72.711,10.752],[-72.752,10.633],[-72.837,10.539],[-72.901,10.436]]]}},{"id":20,"type":"Feature","properties":{"name":"MAGDALENA"},"geometry":{"type":"Polygon","coordinates":[[[-73.575,11.26],[-73.584,11.189],[-73.628,11.142],[-73.665,10.99],[-73.599,10.836],[-73.551,10.749],[-73.594,10.705],[-73.6,10.576],[-73.66,10.456],[-73.78,10.396],[-73.892,10.391],[-73.954,10.339],[-74.065,10.167],[-74.083,10.07],[-73.993,9.936],[-73.959,9.931],[-73.897,9.837],[-73.842,9.798],[-73.803,9.636],[-73.868,9.6],[-74.037,9.592],[-74.137,9.496],[-73.979,9.39],[-73.989,9.317],[-73.943,9.289],[-73.962,9.188],[-73.891,9.174],[-73.864,9.112],[-73.798,9.059],[-73.868,8.936],[-73.872,8.961],[-74.004,9.03],[-74.104,9.022],[-74.175,9.075],[-74.249,9.164],[-74.342,9.231],[-74.403,9.214],[-74.44,9.274],[-74.514,9.234],[-74.565,9.312],[-74.699,9.427],[-74.737,9.422],[-74.806,9.553],[-74.773,9.604],[-74.803,9.667],[-74.815,9.785],[-74.873,9.848],[-74.873,9.935],[-74.787,10.008],[-74.84,10.079],[-74.945,10.128],[-74.911,10.254],[-74.828,10.411],[-74.809,10.476],[-74.736,10.551],[-74.721,10.904],[-74.764,10.995],[-74.852,11.105],[-74.599,11.009],[-74.474,10.979],[-74.356,10.976],[-74.263,11.007],[-74.218,11.066],[-74.238,11.222],[-74.146,11.336],[-74.077,11.317],[-73.979,11.339],[-73.857,11.274],[-73.661,11.253],[-73.575,11.26]]]}},{"id":21,"type":"Feature","properties":{"name":"SUCRE"},"geometry":{"type":"Polygon","coordinates":[[[-74.781,8.278],[-74.801,8.337],[-74.874,8.403],[-74.926,8.5],[-75.008,8.511],[-75.042,8.458],[-75.128,8.469],[-75.185,8.397],[-75.213,8.474],[-75.267,8.487],[-75.328,8.562],[-75.352,8.658],[-75.328,8.737],[-75.364,8.83],[-75.245,8.883],[-75.168,8.952],[-75.21,9.05],[-75.281,9.072],[-75.392,9.159],[-75.445,9.141],[-75.458,9.239],[-75.57,9.279],[-75.701,9.412],[-75.636,9.428],[-75.597,9.49],[-75.571,9.618],[-75.644,9.757],[-75.582,9.951],[-75.573,10.086],[-75.491,10.038],[-75.467,9.909],[-75.393,9.881],[-75.336,9.812],[-75.375,9.657],[-75.325,9.625],[-75.279,9.686],[-75.133,9.596],[-75.032,9.467],[-74.912,9.416],[-74.942,9.351],[-74.902,9.163],[-74.864,9.148],[-74.828,9.061],[-74.639,8.977],[-74.54,8.805],[-74.609,8.73],[-74.534,8.476],[-74.54,8.425],[-74.649,8.314],[-74.781,8.278]]]}},{"id":22,"type":"Feature","properties":{"name":"ARCHIPIÉLAGO DE SAN ANDRÉS, PROVIDENCIA Y SANTA CATALINA"},"geometry":{"type":"Polygon","coordinates":[[[-81.704,12.595],[-81.704,12.543],[-81.736,12.531],[-81.722,12.578],[-81.704,12.595]]]}},{"id":23,"type":"Feature","properties":{"name":"ARAUCA"},"geometry":{"type":"Polygon","coordinates":[[[-69.428,6.108],[-69.536,6.046],[-69.836,6.041],[-69.983,6.158],[-70.03,6.162],[-70.121,6.258],[-70.199,6.295],[-70.313,6.28],[-70.38,6.302],[-70.531,6.23],[-70.557,6.245],[-70.723,6.217],[-70.787,6.251],[-70.984,6.229],[-71.097,6.277],[-71.219,6.299],[-71.345,6.232],[-71.417,6.243],[-71.488,6.202],[-71.534,6.214],[-71.667,6.192],[-71.777,6.193],[-71.88,6.16],[-71.961,6.167],[-72.138,6.067],[-72.278,6.136],[-72.293,6.204],[-72.344,6.227],[-72.367,6.307],[-72.339,6.346],[-72.261,6.442],[-72.138,6.514],[-72.092,6.648],[-72.1,6.746],[-72.051,6.768],[-71.949,7.011],[-71.835,7.026],[-71.811,7.062],[-71.715,7.035],[-71.649,7.051],[-71.574,7.026],[-71.425,7.038],[-71.379,7.017],[-71.128,7.032],[-71.111,6.99],[-71.022,6.974],[-70.896,7.06],[-70.697,7.094],[-70.608,7.065],[-70.548,7.074],[-70.503,7.006],[-70.431,7.008],[-70.323,6.934],[-70.225,6.975],[-70.117,6.979],[-69.814,6.597],[-69.428,6.108]]]}},{"id":24,"type":"Feature","properties":{"name":"BOYACÁ"},"geometry":{"type":"Polygon","coordinates":[[[-72.048,7.038],[-71.949,7.011],[-72.051,6.768],[-72.1,6.746],[-72.092,6.648],[-72.138,6.514],[-72.261,6.442],[-72.339,6.346],[-72.371,6.32],[-72.412,6.188],[-72.375,6.15],[-72.366,6.037],[-72.326,5.935],[-72.416,5.903],[-72.459,5.851],[-72.31,5.794],[-72.226,5.668],[-72.288,5.606],[-72.301,5.507],[-72.397,5.57],[-72.502,5.445],[-72.688,5.282],[-72.812,5.383],[-72.88,5.35],[-72.897,5.26],[-72.973,5.146],[-72.903,5.068],[-72.971,4.98],[-73.015,5.002],[-73.077,4.812],[-73.053,4.737],[-73.103,4.661],[-73.224,4.679],[-73.223,4.733],[-73.306,4.732],[-73.372,4.801],[-73.402,4.879],[-73.52,4.879],[-73.547,4.924],[-73.515,5.036],[-73.48,5.064],[-73.531,5.278],[-73.578,5.302],[-73.618,5.405],[-73.782,5.5],[-73.818,5.554],[-73.89,5.513],[-73.906,5.446],[-73.99,5.375],[-74.143,5.448],[-74.31,5.619],[-74.287,5.746],[-74.334,5.828],[-74.432,5.758],[-74.53,5.79],[-74.593,5.747],[-74.661,5.752],[-74.665,5.768],[-74.638,5.866],[-74.59,5.894],[-74.612,5.966],[-74.563,6.002],[-74.562,6.078],[-74.612,6.126],[-74.527,6.274],[-74.452,6.099],[-74.378,6.039],[-74.287,6.083],[-74.18,5.911],[-74.026,5.806],[-73.998,5.741],[-73.905,5.74],[-73.862,5.711],[-73.711,5.777],[-73.639,5.725],[-73.6,5.87],[-73.631,5.894],[-73.586,6.006],[-73.497,6.108],[-73.403,6.054],[-73.371,6.006],[-73.402,5.902],[-73.444,5.902],[-73.474,5.816],[-73.391,5.751],[-73.345,5.842],[-73.184,5.85],[-73.219,5.913],[-73.2,6.004],[-73.13,5.959],[-72.954,6.066],[-72.804,6.215],[-72.744,6.235],[-72.758,6.317],[-72.732,6.357],[-72.736,6.491],[-72.661,6.444],[-72.54,6.488],[-72.546,6.567],[-72.486,6.657],[-72.503,6.908],[-72.393,6.872],[-72.313,6.932],[-72.291,6.994],[-72.22,6.986],[-72.199,7.041],[-72.048,7.038]]]}},{"id":25,"type":"Feature","properties":{"name":"CUNDINAMARCA"},"geometry":{"type":"Polygon","coordinates":[[[-73.053,4.737],[-73.124,4.26],[-73.354,4.322],[-73.473,4.276],[-73.551,4.308],[-73.573,4.419],[-73.602,4.454],[-73.568,4.527],[-73.622,4.562],[-73.727,4.503],[-73.807,4.422],[-73.784,4.301],[-73.744,4.266],[-73.753,4.193],[-73.814,4.201],[-73.956,4.1],[-74.005,4.11],[-74.101,4.013],[-74.151,4.004],[-74.109,4.169],[-74.152,4.256],[-74.098,4.345],[-74.117,4.405],[-74.005,4.561],[-74.009,4.821],[-74.052,4.832],[-74.173,4.711],[-74.178,4.486],[-74.212,4.393],[-74.217,4.273],[-74.245,4.103],[-74.325,4.127],[-74.366,4.037],[-74.36,3.914],[-74.44,3.73],[-74.446,3.801],[-74.535,3.843],[-74.513,3.953],[-74.531,4.034],[-74.476,4.112],[-74.484,4.177],[-74.562,4.272],[-74.639,4.211],[-74.702,4.213],[-74.813,4.294],[-74.879,4.266],[-74.833,4.443],[-74.787,4.509],[-74.814,4.586],[-74.789,4.659],[-74.814,4.736],[-74.743,4.79],[-74.752,4.866],[-74.716,5.093],[-74.735,5.287],[-74.667,5.405],[-74.675,5.516],[-74.627,5.697],[-74.661,5.752],[-74.593,5.747],[-74.53,5.79],[-74.432,5.758],[-74.334,5.828],[-74.287,5.746],[-74.31,5.619],[-74.143,5.448],[-73.99,5.375],[-73.906,5.446],[-73.89,5.513],[-73.818,5.554],[-73.782,5.5],[-73.618,5.405],[-73.578,5.302],[-73.531,5.278],[-73.48,5.064],[-73.515,5.036],[-73.547,4.924],[-73.52,4.879],[-73.402,4.879],[-73.372,4.801],[-73.306,4.732],[-73.223,4.733],[-73.224,4.679],[-73.103,4.661],[-73.053,4.737]]]}},{"id":26,"type":"Feature","properties":{"name":"NORTE DE SANTANDER"},"geometry":{"type":"Polygon","coordinates":[[[-72.048,7.038],[-72.199,7.041],[-72.22,6.986],[-72.291,6.994],[-72.313,6.932],[-72.393,6.872],[-72.503,6.908],[-72.553,6.985],[-72.722,7.005],[-72.787,7.048],[-72.858,7.154],[-72.841,7.195],[-72.87,7.278],[-72.841,7.362],[-72.901,7.434],[-72.894,7.475],[-72.978,7.529],[-72.993,7.597],[-73.218,7.632],[-73.247,7.558],[-73.355,7.544],[-73.506,7.595],[-73.517,7.637],[-73.633,7.749],[-73.481,7.677],[-73.411,7.716],[-73.351,7.795],[-73.351,7.892],[-73.279,7.936],[-73.278,7.985],[-73.366,8.023],[-73.377,8.106],[-73.432,8.14],[-73.405,8.246],[-73.35,8.334],[-73.394,8.378],[-73.457,8.361],[-73.517,8.396],[-73.473,8.448],[-73.531,8.528],[-73.552,8.606],[-73.463,8.745],[-73.411,8.781],[-73.448,8.862],[-73.44,8.975],[-73.411,9.054],[-73.43,9.102],[-73.369,9.173],[-73.252,9.158],[-73.176,9.177],[-73.009,9.291],[-72.965,9.2],[-72.982,9.147],[-72.933,9.082],[-72.883,9.131],[-72.766,9.1],[-72.72,8.941],[-72.655,8.615],[-72.389,8.349],[-72.383,8.232],[-72.354,8.156],[-72.373,8.104],[-72.346,8.038],[-72.487,7.946],[-72.444,7.86],[-72.469,7.793],[-72.476,7.633],[-72.453,7.565],[-72.479,7.498],[-72.425,7.402],[-72.256,7.378],[-72.198,7.387],[-72.154,7.329],[-72.17,7.252],[-72.048,7.038]]]}},{"id":27,"type":"Feature","properties":{"name":"BOGOTÁ, D.C."},"geometry":{"type":"Polygon","coordinates":[[[-74.151,4.004],[-74.229,3.994],[-74.336,3.822],[-74.416,3.74],[-74.44,3.73],[-74.36,3.914],[-74.366,4.037],[-74.325,4.127],[-74.245,4.103],[-74.217,4.273],[-74.212,4.393],[-74.178,4.486],[-74.173,4.711],[-74.052,4.832],[-74.009,4.821],[-74.005,4.561],[-74.117,4.405],[-74.098,4.345],[-74.152,4.256],[-74.109,4.169],[-74.151,4.004]]]}},{"id":28,"type":"Feature","properties":{"name":"META"},"geometry":{"type":"Polygon","coordinates":[[[-71.078,4.899],[-71.078,3.973],[-71.078,3.295],[-71.077,2.883],[-71.278,2.868],[-71.329,2.892],[-71.389,2.845],[-71.469,2.894],[-71.652,2.821],[-71.742,2.884],[-71.858,2.843],[-72.046,2.818],[-72.113,2.875],[-72.204,2.859],[-72.359,2.781],[-72.389,2.736],[-72.47,2.734],[-72.486,2.685],[-72.563,2.682],[-72.6,2.615],[-72.7,2.62],[-72.736,2.571],[-72.816,2.615],[-72.922,2.56],[-72.936,2.503],[-73.012,2.434],[-73.066,2.426],[-73.153,2.367],[-73.24,2.389],[-73.299,2.336],[-73.438,2.383],[-73.514,2.35],[-73.632,2.353],[-73.661,2.294],[-73.66,1.612],[-73.739,1.638],[-73.858,1.608],[-73.994,1.639],[-74.105,1.691],[-74.207,1.716],[-74.322,1.788],[-74.47,1.807],[-74.563,1.848],[-74.561,1.963],[-74.644,2.095],[-74.594,2.135],[-74.65,2.243],[-74.743,2.27],[-74.742,2.324],[-74.672,2.449],[-74.681,2.554],[-74.589,2.662],[-74.637,2.71],[-74.671,2.888],[-74.762,2.873],[-74.803,2.936],[-74.879,2.914],[-74.899,2.964],[-74.751,3.108],[-74.616,3.321],[-74.639,3.368],[-74.616,3.46],[-74.563,3.526],[-74.502,3.647],[-74.416,3.74],[-74.336,3.822],[-74.229,3.994],[-74.151,4.004],[-74.101,4.013],[-74.005,4.11],[-73.956,4.1],[-73.814,4.201],[-73.753,4.193],[-73.744,4.266],[-73.784,4.301],[-73.807,4.422],[-73.727,4.503],[-73.622,4.562],[-73.568,4.527],[-73.602,4.454],[-73.573,4.419],[-73.551,4.308],[-73.473,4.276],[-73.354,4.322],[-73.124,4.26],[-73.053,4.737],[-73.017,4.635],[-72.968,4.599],[-72.897,4.475],[-72.772,4.37],[-72.77,4.333],[-72.58,4.301],[-72.554,4.336],[-72.405,4.318],[-72.304,4.407],[-72.158,4.442],[-71.999,4.382],[-71.868,4.505],[-71.814,4.574],[-71.736,4.574],[-71.598,4.645],[-71.579,4.674],[-71.212,4.817],[-71.078,4.899]]]}},{"id":29,"type":"Feature","properties":{"name":"HUILA"},"geometry":{"type":"Polygon","coordinates":[[[-74.44,3.73],[-74.416,3.74],[-74.502,3.647],[-74.563,3.526],[-74.616,3.46],[-74.639,3.368],[-74.616,3.321],[-74.751,3.108],[-74.899,2.964],[-75.07,2.745],[-75.147,2.723],[-75.133,2.596],[-75.287,2.41],[-75.31,2.362],[-75.386,2.315],[-75.445,2.144],[-75.535,2.118],[-75.616,1.996],[-75.659,1.892],[-75.735,1.787],[-75.847,1.722],[-75.904,1.716],[-76.035,1.582],[-76.124,1.566],[-76.169,1.589],[-76.245,1.683],[-76.381,1.667],[-76.37,1.732],[-76.434,1.791],[-76.588,1.866],[-76.625,1.974],[-76.587,2.0],[-76.589,2.108],[-76.554,2.14],[-76.425,2.129],[-76.385,2.269],[-76.303,2.284],[-76.209,2.198],[-76.122,2.224],[-76.146,2.294],[-76.127,2.381],[-76.034,2.402],[-75.98,2.503],[-75.863,2.426],[-75.823,2.483],[-75.84,2.558],[-75.748,2.719],[-75.806,2.769],[-75.823,2.835],[-75.896,2.855],[-76.029,2.941],[-75.86,2.873],[-75.803,2.885],[-75.692,2.993],[-75.627,3.003],[-75.622,3.076],[-75.583,3.124],[-75.577,3.221],[-75.479,3.361],[-75.426,3.352],[-75.366,3.407],[-75.241,3.404],[-75.15,3.435],[-75.046,3.432],[-75.036,3.287],[-74.907,3.29],[-74.765,3.44],[-74.775,3.525],[-74.676,3.666],[-74.557,3.768],[-74.535,3.843],[-74.446,3.801],[-74.44,3.73]]]}},{"id":30,"type":"Feature","properties":{"name":"SANTANDER"},"geometry":{"type":"Polygon","coordinates":[[[-73.633,7.749],[-73.517,7.637],[-73.506,7.595],[-73.355,7.544],[-73.247,7.558],[-73.218,7.632],[-72.993,7.597],[-72.978,7.529],[-72.894,7.475],[-72.901,7.434],[-72.841,7.362],[-72.87,7.278],[-72.841,7.195],[-72.858,7.154],[-72.787,7.048],[-72.722,7.005],[-72.553,6.985],[-72.503,6.908],[-72.486,6.657],[-72.546,6.567],[-72.54,6.488],[-72.661,6.444],[-72.736,6.491],[-72.732,6.357],[-72.758,6.317],[-72.744,6.235],[-72.804,6.215],[-72.954,6.066],[-73.13,5.959],[-73.2,6.004],[-73.219,5.913],[-73.184,5.85],[-73.345,5.842],[-73.391,5.751],[-73.474,5.816],[-73.444,5.902],[-73.402,5.902],[-73.371,6.006],[-73.403,6.054],[-73.497,6.108],[-73.586,6.006],[-73.631,5.894],[-73.6,5.87],[-73.639,5.725],[-73.711,5.777],[-73.862,5.711],[-73.905,5.74],[-73.998,5.741],[-74.026,5.806],[-74.18,5.911],[-74.287,6.083],[-74.378,6.039],[-74.452,6.099],[-74.527,6.274],[-74.451,6.332],[-74.397,6.452],[-74.409,6.586],[-74.359,6.633],[-74.256,6.675],[-74.232,6.71],[-74.115,6.766],[-74.011,6.913],[-73.897,6.986],[-73.888,7.071],[-73.939,7.182],[-73.916,7.295],[-73.895,7.431],[-73.917,7.472],[-73.846,7.542],[-73.798,7.657],[-73.83,7.728],[-73.798,7.772],[-73.831,7.932],[-73.862,7.972],[-73.867,8.07],[-73.775,8.145],[-73.764,8.064],[-73.676,7.943],[-73.671,7.894],[-73.75,7.803],[-73.753,7.751],[-73.633,7.749]]]}},{"id":31,"type":"Feature","properties":{"name":"TOLIMA"},"geometry":{"type":"Polygon","coordinates":[[[-74.735,5.287],[-74.716,5.093],[-74.752,4.866],[-74.743,4.79],[-74.814,4.736],[-74.789,4.659],[-74.814,4.586],[-74.787,4.509],[-74.833,4.443],[-74.879,4.266],[-74.813,4.294],[-74.702,4.213],[-74.639,4.211],[-74.562,4.272],[-74.484,4.177],[-74.476,4.112],[-74.531,4.034],[-74.513,3.953],[-74.535,3.843],[-74.557,3.768],[-74.676,3.666],[-74.775,3.525],[-74.765,3.44],[-74.907,3.29],[-75.036,3.287],[-75.046,3.432],[-75.15,3.435],[-75.241,3.404],[-75.366,3.407],[-75.426,3.352],[-75.479,3.361],[-75.577,3.221],[-75.583,3.124],[-75.622,3.076],[-75.627,3.003],[-75.692,2.993],[-75.803,2.885],[-75.86,2.873],[-76.029,2.941],[-76.021,3.005],[-76.073,3.05],[-76.091,3.199],[-76.056,3.223],[-76.038,3.301],[-76.062,3.355],[-76.027,3.487],[-75.985,3.559],[-75.993,3.609],[-75.955,3.714],[-75.922,3.739],[-75.862,3.874],[-75.807,3.931],[-75.752,4.077],[-75.697,4.132],[-75.593,4.319],[-75.578,4.452],[-75.514,4.556],[-75.415,4.623],[-75.388,4.716],[-75.375,4.802],[-75.324,4.866],[-75.352,4.939],[-75.317,5.028],[-75.344,5.081],[-75.288,5.138],[-75.117,5.161],[-75.057,5.275],[-74.939,5.313],[-74.851,5.314],[-74.735,5.287]]]}},{"id":32,"type":"Feature","properties":{"name":"ATLÁNTICO"},"geometry":{"type":"Polygon","coordinates":[[[-74.911,10.254],[-74.965,10.326],[-75.082,10.412],[-75.126,10.399],[-75.241,10.52],[-75.223,10.63],[-75.25,10.723],[-75.224,10.795],[-75.044,10.899],[-75.005,10.98],[-74.852,11.105],[-74.764,10.995],[-74.721,10.904],[-74.736,10.551],[-74.809,10.476],[-74.828,10.411],[-74.911,10.254]]]}}]};
+const SAMPLE_DEPT_DATA = {"RISARALDA": {"acciones": 4, "municipios": ["MISTRATÓ", "PUEBLO RICO"], "sujetos": ["RESGUARDO CHAMI UNIFICADO RISARALDA", "RESGUARDO EMBERA LOMA CITABARA", "RESGUARDO GITO DOKABU"]}, "NARIÑO": {"acciones": 5, "municipios": ["IPIALES", "RICAURTE", "SAN ANDRÉS DE TUMACO"], "sujetos": ["CONSEJO COMUNITARIO RIO TABLON DULCE. NARIÑO -TUMACO", "PERIODISTA CORPORACION  VICTIMAS DEL CONFLICTO ARMADO DE COLOMBIA", "RESGUARDO AWÁ CUAIQUIER INTEGRADO LA MILAGROSA - RICAUTE NARIÑO", "RESGUARDO PIALAPI PUEBLO VIEJO"]}, "BOLÍVAR": {"acciones": 2, "municipios": ["MARÍA LA BAJA", "SIMITÍ"], "sujetos": ["COMUNIDAD DE LOS CORREGIMIENTO DE MONTERREY, SAN BLAS, SANTA LUCÍA, SAN JOAQUÍN Y EL PARAÍSO, DEL MUNICIPIO DE SIMITÍ.", "FLAMENCO CONSEJO COMUNITARIO DE COMUNIDADES NEGRAS. MARIA L ABAJA"]}, "CALDAS": {"acciones": 2, "municipios": ["RIOSUCIO"], "sujetos": ["RESGUARDO ESCOPETERA Y PIRZA"]}, "SANTANDER": {"acciones": 2, "municipios": ["LANDÁZURI", "SANTA HELENA DEL OPÓN"], "sujetos": ["COMUNIDAD DE SANTA HELENA DEL OPON", "OCIACIÓN DE TRABAJADORES CAMPESINOS DEL CARARE-ATCC"]}, "CHOCÓ": {"acciones": 4, "municipios": ["Belen de bajira"], "sujetos": ["CONSEJO COMUNITARIO RIO LA LARGA Y TUMARADO (COCOLATU)"]}, "PUTUMAYO": {"acciones": 3, "municipios": ["VALLE DEL GUAMUEZ"], "sujetos": ["CABILDO INDÍGENA TELAR LUZ DEL AMANECER - PUTUMAYO", "RESGUARDO INDIGENA LA ARGELIA - PUTUMAYO"]}, "CESAR": {"acciones": 1, "municipios": ["VALLEDUPAR"], "sujetos": ["RESGUARDO INDIGENA KANKUAMO"]}, "VALLE DEL CAUCA": {"acciones": 3, "municipios": ["BUENAVENTURA"], "sujetos": ["CONSEJO COMUNITARIO DEL RIO YURUMANGUI"]}, "CAUCA": {"acciones": 2, "municipios": ["PATÍA", "SANTANDER DE QUILICHAO"], "sujetos": ["CONSEJO COMUNITARIO AIRES DE GARRAPATERO", "CONSEJO COMUNITARIO ESPERANZA DE HOYO - PATIA CAUCA"]}, "TOLIMA": {"acciones": 1, "municipios": ["ORTEGA"], "sujetos": ["RESGUARDO LA SORTIJA - TOLIMA (ORTEGA)"]}, "AMAZONAS": {"acciones": 1, "municipios": ["LETICIA"], "sujetos": ["CHITACOYDCABILDO INDIGENA HEREDEROS DE TABACO ,COCA Y YUCA DULCE"]}, "SUCRE": {"acciones": 2, "municipios": ["SAN ONOFRE"], "sujetos": ["COMUNIDAD AFROCOLOMBIANA AGUAS NEGRAS DE SAN ONOFRE"]}};
+const svg = d3.select("#mapSvg");
+const mapWidth = 520, mapHeight = 620;
+const projection = d3.geoMercator().fitSize([mapWidth, mapHeight], GEOJSON);
+const geoPath = d3.geoPath().projection(projection);
+const tooltip = document.getElementById('tooltip');
+
+function colorFor(count){
+  if(!count) return 'var(--inactive)';
+  if(count <= 2) return '#AFC6E8';
+  if(count <= 4) return '#5D8CC9';
+  return '#1F3864';
+}
+
+function drawMap(deptData){
+  svg.selectAll('*').remove();
+  const g = svg.append('g');
+  g.selectAll('path.dept')
+    .data(GEOJSON.features)
+    .join('path')
+    .attr('class', d => 'dept' + (deptData[d.properties.name] ? ' active' : ''))
+    .attr('d', geoPath)
+    .attr('fill', d => colorFor(deptData[d.properties.name] ? deptData[d.properties.name].acciones : 0))
+    .on('mousemove', function(event, d){
+      const info = deptData[d.properties.name];
+      const rectBox = document.getElementById('mapSvg').getBoundingClientRect();
+      const x = event.clientX - rectBox.left;
+      const y = event.clientY - rectBox.top;
+      if(info){
+        tooltip.innerHTML = `<b>${d.properties.name}</b><br>`+
+          `${info.acciones} acción(es) &middot; ${info.sujetos.length} sujeto(s)<br>`+
+          `Municipios: ${info.municipios.join(', ')}`;
+      } else {
+        tooltip.innerHTML = `<b>${d.properties.name}</b><br>Sin acciones registradas`;
+      }
+      tooltip.style.opacity = 1;
+      const tw = tooltip.offsetWidth || 220;
+      const margin = 16;
+      let left = x - tw - margin;
+      if(left < 0) left = x + margin;
+      tooltip.style.left = left + 'px';
+      tooltip.style.top = (y + 18) + 'px';
+    })
+    .on('mouseleave', function(){ tooltip.style.opacity = 0; })
+    .on('click', function(event, d){
+      const info = deptData[d.properties.name];
+      if(info) highlightListItem(d.properties.name);
+    });
+
+  g.selectAll('text.dept-label')
+    .data(GEOJSON.features.filter(d => deptData[d.properties.name]))
+    .join('text')
+    .attr('class','dept-label active-label')
+    .attr('transform', d => `translate(${geoPath.centroid(d)})`)
+    .text(d => d.properties.name);
+
+  renderMapKpis(deptData);
+  renderDeptList(deptData);
+}
+function renderMapKpis(deptData){
+  const keys = Object.keys(deptData);
+  let munis = new Set(), sujetos = new Set(), acciones = 0;
+  keys.forEach(k=>{
+    deptData[k].municipios.forEach(m=>munis.add(k+'|'+m));
+    deptData[k].sujetos.forEach(s=>sujetos.add(s));
+    acciones += deptData[k].acciones;
+  });
+  document.getElementById('kpiDeptos').textContent = keys.length;
+  document.getElementById('kpiMunis').textContent = munis.size;
+  document.getElementById('kpiSujetos').textContent = sujetos.size;
+  document.getElementById('kpiAcciones').textContent = acciones;
+}
+function renderDeptList(deptData){
+  const list = document.getElementById('deptList');
+  const keys = Object.keys(deptData).sort((a,b)=> deptData[b].acciones - deptData[a].acciones);
+  if(!keys.length){ list.innerHTML = '<div style="color:#999;font-style:italic;">Sin departamentos con datos</div>'; return; }
+  list.innerHTML = keys.map(k=>{
+    const info = deptData[k];
+    return `<div class="dept-item" data-dept="${k}">
+      <div class="dname">${k} <span class="badge">${info.acciones}</span></div>
+      <div class="dmeta">${info.sujetos.length} sujeto(s) de reparación colectiva</div>
+      <div class="dmunis">Municipios: ${info.municipios.join(', ')}</div>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('.dept-item').forEach(el=>{
+    el.addEventListener('click', ()=> highlightListItem(el.dataset.dept));
+  });
+}
+function highlightListItem(deptName){
+  document.querySelectorAll('.dept-item').forEach(el=>{
+    el.classList.toggle('selected', el.dataset.dept === deptName);
+  });
+}
+function buildDeptDataFromRows(rows){
+  const deptData = {};
+  rows.forEach(r=>{
+    const dept = (r['DEPARTAMENTO']||'').toString().trim().toUpperCase();
+    const muni = (r['MUNCIPIO']||r['MUNICIPIO']||'').toString().trim();
+    const sujeto = r['Sujeto'];
+    if(!dept) return;
+    if(!deptData[dept]) deptData[dept] = {acciones:0, municipios:new Set(), sujetos:new Set()};
+    deptData[dept].acciones += 1;
+    if(muni) deptData[dept].municipios.add(muni);
+    if(sujeto) deptData[dept].sujetos.add(sujeto);
+  });
+  Object.keys(deptData).forEach(k=>{
+    deptData[k].municipios = Array.from(deptData[k].municipios).sort();
+    deptData[k].sujetos = Array.from(deptData[k].sujetos).sort();
+  });
+  return deptData;
+}
+
+/* ============ CARGA UNIFICADA DE EXCEL (Hoja 1) ============ */
+document.getElementById('excelInputHoja1').addEventListener('change', function(e){
+  const file = e.target.files[0];
+  const statusEl = document.getElementById('fileStatus');
+  if(!file) return;
+  statusEl.className=''; statusEl.textContent = 'Leyendo ' + file.name + '…';
+  const reader = new FileReader();
+  reader.onload = function(evt){
+    try{
+      const data = new Uint8Array(evt.target.result);
+      const wb = XLSX.read(data, {type:'array'});
+      const expected = ['Maquinaria_Amarilla','Documentacion_Completa','Acompanamiento_Documentacion','Acciones_Rehabilitacion','Seguimiento_Contactabilidad','Insumo_Sujetos'];
+      const found = expected.filter(s => wb.Sheets[s]);
+      if(found.length===0){
+        statusEl.className='err';
+        statusEl.textContent = 'No se encontró ninguna hoja con los nombres esperados. Revisa las notas aclaratorias.';
+        return;
+      }
+      renderInformeAll(wb);
+      const insumoRows = sheetToRows(wb, 'Insumo_Sujetos');
+      if(insumoRows){
+        const deptData = buildDeptDataFromRows(insumoRows);
+        drawMap(deptData);
+        document.getElementById('sourceNoteMapa').textContent = 'Fuente: ' + file.name + ' (hoja Insumo_Sujetos)';
+      }
+      statusEl.className='ok';
+      statusEl.textContent = 'Actualizado: ' + found.length + ' de ' + expected.length + ' hojas encontradas (' + found.join(', ') + ').';
+    }catch(err){
+      statusEl.className='err';
+      statusEl.textContent = 'No se pudo leer el archivo (¿es un .xlsx válido?).';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+/* ============ DATOS DE EJEMPLO AL ABRIR ============ */
+const SAMPLE = {
+  Maquinaria_Amarilla: [
+    {ID:64, 'Caso Nombre':'COMUNIDAD DE LOS CORREGIMIENTO DE MONTERREY, SAN BLAS, SANTA LUCÍA, SAN JOAQUÍN Y EL PARAÍSO, DEL MUNICIPIO DE SIMITÍ.', Medida:39387, 'Producto / Medida':'Servicio de gestión para la transferencia de activos productivos', Accion:39391, 'Actividad / Accion':'Realizar la entrega del banco de maquinaria', 'Proyeccion de costos':3017488000, Observaciones:'El proceso de importación tiene un tiempo entre 1 a 3 meses.'},
+    {ID:306, 'Caso Nombre':'ASOCIACIÓN DE TRABAJADORES CAMPESINOS DEL CARARE-ATCC', Medida:55515, 'Producto / Medida':'Servicio de gestión para la transferencia de activos productivos.', Accion:55516, 'Actividad / Accion':'Entrega de un Banco de maquinaria amarilla compuesto por una retroexcavadora pajarita, una volqueta y una motoniveladora.', 'Proyeccion de costos':null, Observaciones:'Pendiente de costeo — falta número de acción asignado.'},
+    {ID:387, 'Caso Nombre':'COMUNIDAD DE SANTA HELENA DEL OPON', Medida:42772, 'Producto / Medida':'Servicio de gestión para la transferencia de activos productivos', Accion:42776, 'Actividad / Accion':'4. Entrega maquinaria amarilla', 'Proyeccion de costos':792070436, Observaciones:'El proceso de importación tiene un tiempo entre 1 a 3 meses.'}
+  ],
+  Documentacion_Completa: [
+    {Tipo:'Ordenes Judiciales', 'Caso Nombre':'557 - CONSEJO COMUNITARIO RIO TABLON DULCE', 'Medida ID':44992, 'Producto / Medida':'Servicios de realización de eventos relacionados con prácticas tradicionales, sociales y culturales afectadas por el conflicto armado', 'Accion ID':45040, 'Actividad / Accion':'Realizar la fiesta patronal del 20 de enero en honor de San Sebastián.', 'Proyeccion de costos':127308000},
+    {Tipo:'Ordenes Judiciales', 'Caso Nombre':'404 - CONSEJO COMUNITARIO AIRES DE GARRAPATERO', 'Medida ID':35264, 'Producto / Medida':'Infraestructura de producción agrícola adecuada', 'Accion ID':35267, 'Actividad / Accion':'Realizar la compra de los materiales de construcción requeridos para la adecuación del trapiche comunitario', 'Proyeccion de costos':99670404.96},
+    {Tipo:'Ordenes Judiciales', 'Caso Nombre':'243 - PUEBLO KANKUAMO', 'Medida ID':50303, 'Producto / Medida':'Centros comunitarios adecuados', 'Accion ID':50346, 'Actividad / Accion':'Construir seis kankuruas ubicadas en las comunidades de Ramatío, Mojao y Rancho de la Goya - Resguardo Indígena Kankuamo.', 'Proyeccion de costos':875869616},
+    {Tipo:'Ordenes Judiciales', 'Caso Nombre':'706 - CABILDO INDIGENA TELAR LUZ DEL AMANECER', 'Medida ID':49441, 'Producto / Medida':'Actos simbólicos y de dignificación', 'Accion ID':49452, 'Actividad / Accion':'Realizar el Día de conmemoración por las víctimas del colectivo', 'Proyeccion de costos':59234643},
+    {Tipo:'Ordenes Judiciales', 'Caso Nombre':'706 - CABILDO INDIGENA TELAR LUZ DEL AMANECER', 'Medida ID':49449, 'Producto / Medida':'Servicio de apoyo a las formas propias de protección comunitaria y control territorial étnicas', 'Accion ID':49491, 'Actividad / Accion':'Realizar taller de capacitación a la guardia indígena', 'Proyeccion de costos':59234643}
+  ],
+  Acompanamiento_Documentacion: [
+    {Tipo:'Ordenes Judiciales', 'Caso Nombre':'252 - CONSEJO COMUNITARIO DE LOS RÍOS DE LA LARGA Y TUMARADÓ', Macroregion:'NOROCCIDENTE', 'Caso DT':'URABA', 'Caso Mpio':'RIOSUCIO', 'Caso Dpto':'CHOCÓ'},
+    {Tipo:'Ordenes Judiciales', 'Caso Nombre':'268 - CONSEJO COMUNITARIO GUAPI ABAJO', Macroregion:'PACÍFICO', 'Caso DT':'CAUCA', 'Caso Mpio':'GUAPI', 'Caso Dpto':'CAUCA'},
+    {Tipo:'Ordenes Judiciales', 'Caso Nombre':'406 - CONSEJO COMUNITARIO LA NUEVA ESPERANZA DEL HOYO', Macroregion:'PACÍFICO', 'Caso DT':'CAUCA', 'Caso Mpio':'PATÍA', 'Caso Dpto':'CAUCA'},
+    {Tipo:'Acciones no implementadas', 'Caso Nombre':'470 - RESGUARDO INGA DE APONTE', Macroregion:'PACÍFICO', 'Caso DT':'NARIÑO', 'Caso Mpio':'TABLÓN DE GÓMEZ', 'Caso Dpto':'NARIÑO'},
+    {Tipo:'Ordenes Judiciales', 'Caso Nombre':'650 - RESGUARDO ARGELIA', Macroregion:'AMAZONÍA -ORINOQUÍA', 'Caso DT':'PUTUMAYO', 'Caso Mpio':'VALLE DEL GUAMUEZ', 'Caso Dpto':'PUTUMAYO'},
+    {Tipo:'Ordenes Judiciales', 'Caso Nombre':'695 - CABILDO INDIGENA NULPE ALTO', Macroregion:'PACÍFICO', 'Caso DT':'NARIÑO', 'Caso Mpio':'RICAURTE', 'Caso Dpto':'NARIÑO'},
+    {Tipo:'Acciones no implementadas', 'Caso Nombre':'772 - LA COMUNIDAD DE LA ASOCIACIÓN DE CAPITANES INDÍGENAS DEL RESGUARDO MIRITÍ-PARANÁ ACIMA', Macroregion:'AMAZONÍA -ORINOQUÍA', 'Caso DT':'META Y LLANOS ORIENTALES', 'Caso Mpio':'MIRITÍ - PARANÁ', 'Caso Dpto':'AMAZONAS'},
+    {Tipo:'Acciones no implementadas', 'Caso Nombre':'774 - COMUNIDAD DEL CABILDO INDÍGENA HEREDEROS DEL TABACO, COCA Y YUCA DULCE CHITACOYD', Macroregion:'AMAZONÍA -ORINOQUÍA', 'Caso DT':'META Y LLANOS ORIENTALES', 'Caso Mpio':'LETICIA', 'Caso Dpto':'AMAZONAS'},
+    {Tipo:'Ordenes Judiciales', 'Caso Nombre':'813 - RESGUARDO AWÁ CUAIQUER INTEGRADO LA MILAGROSA', Macroregion:'PACÍFICO', 'Caso DT':'NARIÑO', 'Caso Mpio':'RICAURTE', 'Caso Dpto':'NARIÑO'},
+    {Tipo:'Ordenes Judiciales', 'Caso Nombre':'83 - CONSEJO COMUNITARIO DEL RÍO YURUMANGUÍ', Macroregion:'PACÍFICO', 'Caso DT':'VALLE', 'Caso Mpio':'BUENAVENTURA', 'Caso Dpto':'VALLE DEL CAUCA'}
+  ],
+  Acciones_Rehabilitacion: [
+    {Tipo:'Acciones no implementadas', 'Caso Nombre':'506 - COMUNIDAD AFROCOLOMBIANA AGUAS NEGRAS DE SAN ONOFRE', 'Medida ID':48606, 'Producto / Medida':'Servicios de rehabilitación psicosocial de las prácticas ancestrales de salud y armonización colectiva', 'Accion ID':48621, 'Actividad / Accion':'Realizar el segundo encuentro comunitario de acompañamiento psicosocial a víctimas de violencia sexual en el arroyo Cascajo.', 'Proyeccion de costos':13773028},
+    {Tipo:'Acciones no implementadas', 'Caso Nombre':'506 - COMUNIDAD AFROCOLOMBIANA AGUAS NEGRAS DE SAN ONOFRE', 'Medida ID':48606, 'Producto / Medida':'Servicios de rehabilitación psicosocial de las prácticas ancestrales de salud y armonización colectiva', 'Accion ID':48622, 'Actividad / Accion':'Realizar un ritual de cierre y sanación para las mujeres', 'Proyeccion de costos':39433005},
+    {Tipo:'Acciones no implementadas', 'Caso Nombre':'729 - CONSEJO COMUNITARIO AFRODESCENDIENTE REBELIÓN', 'Medida ID':42290, 'Producto / Medida':'Servicios de apoyo a la transmisión y divulgación del conocimiento de la medicina ancestral', 'Accion ID':42292, 'Actividad / Accion':'Realizar encuentros de transmisión de conocimiento de la medicina ancestral', 'Proyeccion de costos':9603000},
+    {Tipo:'Acciones no implementadas', 'Caso Nombre':'729 - CONSEJO COMUNITARIO AFRODESCENDIENTE REBELIÓN', 'Medida ID':42315, 'Producto / Medida':'Servicios de rehabilitación psicosocial de las prácticas ancestrales de salud y armonización colectiva', 'Accion ID':42318, 'Actividad / Accion':'Cierre de la medida de rehabilitación', 'Proyeccion de costos':22533890},
+    {Tipo:'Acciones no implementadas', 'Caso Nombre':'501 - CONSEJO COMUNITARIO FLAMENCO', 'Medida ID':46424, 'Producto / Medida':'Servicios de rehabilitación psicosocial de las prácticas ancestrales de salud y armonización colectiva', 'Accion ID':48558, 'Actividad / Accion':'Realizar la 1 de 3 tertulias con las mujeres para trámite del dolor, sanación y armonía espiritual', 'Proyeccion de costos':9475574},
+    {Tipo:'Acciones no implementadas', 'Caso Nombre':'833 - RESGUARDO PIALAPI PUEBLO VIEJO', 'Medida ID':47041, 'Producto / Medida':'Servicios de rehabilitación psicosocial de las prácticas ancestrales de salud y armonización colectiva', 'Accion ID':47070, 'Actividad / Accion':'Realizar la compra y entrega de la dotación (semillas de medicina ancestral) para el Resguardo.', 'Proyeccion de costos':5214375},
+    {Tipo:'Acciones no implementadas', 'Caso Nombre':'833 - RESGUARDO PIALAPI PUEBLO VIEJO', 'Medida ID':47041, 'Producto / Medida':'Servicios de rehabilitación psicosocial de las prácticas ancestrales de salud y armonización colectiva', 'Accion ID':47071, 'Actividad / Accion':'Realizar una minga para adecuación de huerta de medicina tradicional del Resguardo.', 'Proyeccion de costos':17311725},
+    {Tipo:'Acciones no implementadas', 'Caso Nombre':'317 - PERIODISTAS', 'Medida ID':38773, 'Producto / Medida':'Rehabilitación', 'Accion ID':38778, 'Actividad / Accion':'Realizar los últimos dos encuentros de los 4 encuentros de GAM con el tercer grupo de periodistas.', 'Proyeccion de costos':57000000},
+    {Tipo:'Acciones no implementadas', 'Caso Nombre':'317 - PERIODISTAS', 'Medida ID':'Cierre de medida', 'Producto / Medida':'Rehabilitación', 'Accion ID':'Cierre de medida', 'Actividad / Accion':'Encuentro de cierre simbólico de la implementación de la medida de rehabilitación identificando logros con los tejedores y tejedoras del SRC Periodistas', 'Proyeccion de costos':40000000},
+    {Tipo:'Ordenes Judiciales', 'Caso Nombre':'88 - RESGUARDO GITO DOKABU', 'Medida ID':43548, 'Producto / Medida':'Servicios de rehabilitación psicosocial de la relación sagrada del colectivo con el territorio', 'Accion ID':43555, 'Actividad / Accion':'Realizar ceremonia espiritual y ritual de limpieza en las comunidades de Canchido y Cuna Gito', 'Proyeccion de costos':10507978},
+    {Tipo:'Ordenes Judiciales', 'Caso Nombre':'88 - RESGUARDO GITO DOKABU', 'Medida ID':43548, 'Producto / Medida':'Servicios de rehabilitación psicosocial de la relación sagrada del colectivo con el territorio', 'Accion ID':43556, 'Actividad / Accion':'Realizar ceremonia espiritual y ritual de limpieza en las comunidades de Buenos Aires y Playitas', 'Proyeccion de costos':12507978},
+    {Tipo:'Ordenes Judiciales', 'Caso Nombre':'86 - RESGUARDO EMBERA LOMA CITABARA', 'Medida ID':42976, 'Producto / Medida':'Servicios de rehabilitación psicosocial de las prácticas ancestrales de salud y armonización colectiva', 'Accion ID':42978, 'Actividad / Accion':'Espacios de formación sobre las prácticas médicas y ancestrales a las comunidades', 'Proyeccion de costos':5034323},
+    {Tipo:'Ordenes Judiciales', 'Caso Nombre':'87 - RESGUARDO CHAMI UNIFICADO', 'Medida ID':43234, 'Producto / Medida':'Servicios de rehabilitación psicosocial de las prácticas ancestrales de salud y armonización colectiva', 'Accion ID':43240, 'Actividad / Accion':'Servicios de apoyo a la transmisión y divulgación del conocimiento de la medicina ancestral', 'Proyeccion de costos':12550000}
+  ],
+  Seguimiento_Contactabilidad: [
+    {Zona:'Zona 01', 'Sin Respuesta':6, 'Con Respuesta':4},
+    {Zona:'Zona 02', 'Sin Respuesta':0, 'Con Respuesta':3},
+    {Zona:'Zona 03', 'Sin Respuesta':0, 'Con Respuesta':4},
+    {Zona:'Zona 04', 'Sin Respuesta':2, 'Con Respuesta':6},
+    {Zona:'Zona 05', 'Sin Respuesta':2, 'Con Respuesta':12}
+  ]
+};
+renderMaquinaria(SAMPLE.Maquinaria_Amarilla);
+renderDocCompleta(SAMPLE.Documentacion_Completa);
+renderAcompanamiento(SAMPLE.Acompanamiento_Documentacion);
+renderRehabilitacion(SAMPLE.Acciones_Rehabilitacion);
+renderContactabilidad(SAMPLE.Seguimiento_Contactabilidad);
+drawMap(SAMPLE_DEPT_DATA);
+</script>
+
+<script>
+/* ============ REGISTRO FOTOGRAFICO (script independiente: funciona aunque falle D3/mapa) ============ */
+const PHOTO_DATA = {}; // Las fotos se cargan desde fotos/manifest.json
+
+function renderPhotoGallery(photoData){
+  const container = document.getElementById('photoGallery');
+  const keys = Object.keys(photoData);
+  if(!keys.length){ container.innerHTML = '<p style="color:#999;font-style:italic;">Sin fotografías cargadas.</p>'; return; }
+  container.innerHTML = keys.map(key=>{
+    const g = photoData[key];
+    const thumbs = g.imagenes.map((img, idx)=>`
+      <div class="photo-thumb" data-src="${img.data}" data-caption="${g.titulo} — Foto ${idx+1}">
+        <img src="${img.data}" alt="${g.titulo} foto ${idx+1}">
+        <div class="pt-label">Foto ${idx+1}</div>
+      </div>`).join('');
+    return `<div class="photo-subject">
+      <div class="photo-subject-header">
+        <div class="psh-title">${g.titulo}</div>
+        <div class="psh-detail">${g.detalle}</div>
+      </div>
+      <div class="photo-grid">${thumbs}</div>
+    </div>`;
+  }).join('');
+
+  container.querySelectorAll('.photo-thumb').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      document.getElementById('lightboxImg').src = el.dataset.src;
+      document.getElementById('lightboxCaption').textContent = el.dataset.caption;
+      document.getElementById('lightbox').classList.add('open');
+    });
+  });
+}
+
+function closeLightbox(){ document.getElementById('lightbox').classList.remove('open'); }
+document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
+document.getElementById('lightbox').addEventListener('click', function(e){
+  if(e.target.id === 'lightbox') closeLightbox();
+});
+document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeLightbox(); });
+
+/* Carga inicial de fotos desde el repositorio (fotos/manifest.json) */
+fetch('fotos/manifest.json')
+  .then(r => { if(!r.ok) throw new Error('manifest no encontrado'); return r.json(); })
+  .then(manifest => {
+    const groups = {};
+    Object.keys(manifest).forEach(key => {
+      const g = manifest[key];
+      groups[key] = {
+        titulo: g.titulo || key,
+        detalle: g.detalle || '',
+        imagenes: (g.archivos || []).map((f, i) => ({ num: i+1, data: 'fotos/' + f, nombre: f }))
+      };
+    });
+    renderPhotoGallery(groups);
+    const st = document.getElementById('photoStatus');
+    if(st){ st.className = 'ok'; st.textContent = 'Fotos cargadas desde el repositorio (fotos/manifest.json).'; }
+  })
+  .catch(() => {
+    renderPhotoGallery({});
+    const st = document.getElementById('photoStatus');
+    if(st){ st.textContent = 'No se pudo leer fotos/manifest.json — puedes cargar fotos manualmente aquí.'; }
+  });
+
+/* ============ CARGA INTERACTIVA DE FOTOS (archivos o carpeta) ============ */
+function subjectKeyFromFilename(filename){
+  const base = filename.replace(/\.[^/.]+$/, ''); // quita extensión
+  const m = base.match(/^(.+?)[_\-\s]+(\d+)$/); // Sujeto_1, Sujeto-1, Sujeto 1
+  return m ? m[1] : base;
+}
+function titleFromKey(key){
+  return key.replace(/[_\-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function loadPhotosFromFileList(fileList){
+  const statusEl = document.getElementById('photoStatus');
+  const files = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+  if(!files.length){
+    statusEl.className = 'err';
+    statusEl.textContent = 'No se encontraron imágenes en la selección.';
+    return;
+  }
+  statusEl.className = '';
+  statusEl.textContent = 'Leyendo ' + files.length + ' imagen(es)…';
+
+  const groups = {};
+  let loaded = 0;
+
+  files.forEach(file=>{
+    const reader = new FileReader();
+    reader.onload = function(evt){
+      const key = subjectKeyFromFilename(file.name);
+      if(!groups[key]) groups[key] = { titulo: titleFromKey(key), detalle: '', imagenes: [] };
+      groups[key].imagenes.push({ num: groups[key].imagenes.length + 1, data: evt.target.result, nombre: file.name });
+      loaded++;
+      if(loaded === files.length){
+        // ordenar imagenes de cada grupo por nombre de archivo
+        Object.values(groups).forEach(g => g.imagenes.sort((a,b)=> a.nombre.localeCompare(b.nombre, undefined, {numeric:true})));
+        renderPhotoGallery(groups);
+        statusEl.className = 'ok';
+        statusEl.textContent = `Actualizado: ${files.length} foto(s) en ${Object.keys(groups).length} sujeto(s).`;
+      }
+    };
+    reader.onerror = function(){
+      loaded++;
+      statusEl.className = 'err';
+      statusEl.textContent = 'Hubo un problema leyendo alguna imagen (' + file.name + ').';
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+document.getElementById('photoInputFiles').addEventListener('change', e => loadPhotosFromFileList(e.target.files));
+document.getElementById('photoInputFolder').addEventListener('change', e => loadPhotosFromFileList(e.target.files));
+</script>
+
+<script>
+/* ============ AUTOCARGA DESDE EL REPOSITORIO (GitHub Pages / servidor) ============ */
+/* Lee config.json (diseño) y data/informe.xlsx (datos) al abrir. Si no existen
+   (por ejemplo al abrir el archivo localmente con doble clic), no pasa nada:
+   se pueden cargar manualmente desde la hoja de Configuración. */
+
+fetch('config.json')
+  .then(r => { if(!r.ok) throw new Error(); return r.json(); })
+  .then(cfg => {
+    if(cfg.fechaCorte){
+      const inp = document.getElementById('fechaCorteInput');
+      inp.value = cfg.fechaCorte;
+      updateFechaCorte(cfg.fechaCorte);
+    }
+    if(cfg.nombreHojaInforme){
+      document.getElementById('tabNameInforme').value = cfg.nombreHojaInforme;
+      setTabName('informe', cfg.nombreHojaInforme);
+    }
+    if(cfg.nombreHojaFotos){
+      document.getElementById('tabNameFotos').value = cfg.nombreHojaFotos;
+      setTabName('fotos', cfg.nombreHojaFotos);
+    }
+    if(cfg.logo){
+      const topbarImg = document.getElementById('customLogo');
+      topbarImg.src = cfg.logo;
+      topbarImg.style.display = 'inline-block';
+      document.getElementById('textLogos').style.display = 'none';
+      const coverImg = document.getElementById('customLogoCover');
+      coverImg.src = cfg.logo;
+      coverImg.style.display = 'block';
+      document.getElementById('logoPreview').src = cfg.logo;
+      document.getElementById('logoPreview').style.display = 'inline-block';
+      document.getElementById('logoPh').style.display = 'none';
+    }
+  })
+  .catch(()=>{ /* sin config.json: se usan los valores por defecto */ });
+
+fetch('data/informe.xlsx')
+  .then(r => { if(!r.ok) throw new Error(); return r.arrayBuffer(); })
+  .then(buf => {
+    const wb = XLSX.read(new Uint8Array(buf), {type:'array'});
+    renderInformeAll(wb);
+    const insumoRows = sheetToRows(wb, 'Insumo_Sujetos');
+    if(insumoRows){
+      drawMap(buildDeptDataFromRows(insumoRows));
+      document.getElementById('sourceNoteMapa').textContent = 'Fuente: data/informe.xlsx (hoja Insumo_Sujetos)';
+    }
+    const st = document.getElementById('fileStatus');
+    if(st){ st.className='ok'; st.textContent = 'Datos cargados automáticamente desde data/informe.xlsx del repositorio.'; }
+  })
+  .catch(()=>{ /* sin data/informe.xlsx: quedan los datos de ejemplo embebidos */ });
+
+/* ============ EXPORTAR CONFIGURACION (para subir al repositorio) ============ */
+function exportarConfig(){
+  const cfg = {
+    fechaCorte: document.getElementById('fechaCorteInput').value,
+    nombreHojaInforme: document.getElementById('tabNameInforme').value,
+    nombreHojaFotos: document.getElementById('tabNameFotos').value,
+    logo: (document.getElementById('customLogo').style.display !== 'none' &&
+           document.getElementById('customLogo').src.startsWith('data:')) ? 'assets/logo.png' : (document.getElementById('customLogo').src ? document.getElementById('customLogo').getAttribute('src') : null)
+  };
+  const blob = new Blob([JSON.stringify(cfg, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'config.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+</script>
+
+<script>
+/* ============ CONTROL DE ACCESO ============ */
+/* Las credenciales NO estan en texto plano: se valida contra un hash SHA-256 con salt. */
+(function(){
+  // Implementacion compacta de SHA-256 en JS puro (funciona en https, http y file://)
+  function sha256(ascii){
+    function rightRotate(v, a){ return (v>>>a) | (v<<(32-a)); }
+    var mathPow = Math.pow, maxWord = mathPow(2,32), result = '';
+    var words = [], asciiBitLength = ascii.length*8;
+    var hash = sha256.h = sha256.h || [], k = sha256.k = sha256.k || [], primeCounter = k.length;
+    var isComposite = {};
+    for(var candidate=2; primeCounter<64; candidate++){
+      if(!isComposite[candidate]){
+        for(var i=0;i<313;i+=candidate) isComposite[i]=candidate;
+        hash[primeCounter] = (mathPow(candidate,.5)*maxWord)|0;
+        k[primeCounter++] = (mathPow(candidate,1/3)*maxWord)|0;
+      }
+    }
+    ascii += '\x80';
+    while(ascii.length%64 - 56) ascii += '\x00';
+    for(i=0;i<ascii.length;i++){
+      var j = ascii.charCodeAt(i);
+      if(j>>8) return; // solo ASCII
+      words[i>>2] |= j << ((3-i)%4)*8;
+    }
+    words[words.length] = ((asciiBitLength/maxWord)|0);
+    words[words.length] = (asciiBitLength);
+    for(j=0;j<words.length;){
+      var w = words.slice(j, j+=16), oldHash = hash;
+      hash = hash.slice(0,8);
+      for(i=0;i<64;i++){
+        var w15 = w[i-15], w2 = w[i-2];
+        var a = hash[0], e = hash[4];
+        var temp1 = hash[7]
+          + (rightRotate(e,6) ^ rightRotate(e,11) ^ rightRotate(e,25))
+          + ((e&hash[5]) ^ ((~e)&hash[6])) + k[i]
+          + (w[i] = (i<16) ? w[i] : (w[i-16]
+              + (rightRotate(w15,7) ^ rightRotate(w15,18) ^ (w15>>>3))
+              + w[i-7]
+              + (rightRotate(w2,17) ^ rightRotate(w2,19) ^ (w2>>>10)))|0);
+        var temp2 = (rightRotate(a,2) ^ rightRotate(a,13) ^ rightRotate(a,22))
+          + ((a&hash[1]) ^ (a&hash[2]) ^ (hash[1]&hash[2]));
+        hash = [(temp1+temp2)|0].concat(hash);
+        hash[4] = (hash[4]+temp1)|0;
+      }
+      for(i=0;i<8;i++) hash[i] = (hash[i]+oldHash[i])|0;
+    }
+    for(i=0;i<8;i++){
+      for(j=3;j+1;j--){
+        var b = (hash[i]>>(j*8))&255;
+        result += ((b>>4).toString(16)) + ((b&15).toString(16));
+      }
+    }
+    return result;
+  }
+
+  var EXPECTED = '66a2a6da5949a1b24b21c31cd9d11432d43c656b291bb006d93d63b1334f7db5';
+  var overlay = document.getElementById('loginOverlay');
+
+  function unlock(){ overlay.classList.add('unlocked'); }
+
+  // Mantener sesion abierta mientras dure la pestana (si el navegador lo permite)
+  try{ if(sessionStorage.getItem('cisp_auth') === EXPECTED) unlock(); }catch(e){}
+
+  document.getElementById('loginForm').addEventListener('submit', function(ev){
+    ev.preventDefault();
+    var u = document.getElementById('loginUser').value.trim();
+    var p = document.getElementById('loginPass').value;
+    var h = sha256('cisp3007:' + u + ':' + p);
+    if(h === EXPECTED){
+      try{ sessionStorage.setItem('cisp_auth', EXPECTED); }catch(e){}
+      unlock();
+    } else {
+      document.getElementById('loginError').classList.add('show');
+      document.getElementById('loginPass').value = '';
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

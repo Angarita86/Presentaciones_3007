@@ -1,0 +1,31 @@
+{
+  "Flamenco": {
+    "titulo": "501 - Consejo Comunitario Flamenco",
+    "detalle": "Comunidad Afrodescendiente Flamenco · María La Baja, Bolívar",
+    "archivos": [
+      "Flamenco_1.jpeg",
+      "Flamenco_2.jpeg",
+      "Flamenco_3.jpeg"
+    ]
+  },
+  "Amazonas": {
+    "titulo": "774 - Cabildo Indígena Herederos de Tabaco, Coca y Yuca Dulce (CHITACOYD)",
+    "detalle": "Leticia, Amazonas",
+    "archivos": [
+      "Amazonas_6.jpeg"
+    ]
+  },
+  "Luz_Telar": {
+    "titulo": "706 - Cabildo Indígena Telar Luz del Amanecer",
+    "detalle": "Valle del Guamuez, Putumayo",
+    "archivos": [
+      "Luz_Telar_1.jpeg",
+      "Luz_Telar_2.jpeg",
+      "Luz_Telar_3.jpeg",
+      "Luz_Telar_4.jpeg",
+      "Luz_Telar_5.jpeg",
+      "Luz_Telar_6.jpeg",
+      "Luz_Telar_7.jpeg"
+    ]
+  }
+}
