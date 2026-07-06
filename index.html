@@ -315,8 +315,9 @@
   .ed-body{ padding:0 14px 14px; }
   .ed-bloque{ border:1px dashed var(--gray-line); border-radius:6px; padding:10px 12px; margin-bottom:10px; }
   .ed-bloque-head{ display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:12px; color:#555; font-weight:700; }
-  .ed-celda{ background:#FAFBFC; border:1px solid var(--gray-line); border-radius:6px; padding:10px; margin-bottom:8px;
-    display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; }
+  .ed-celda{ background:#FAFBFC; border:1px solid var(--gray-line); border-radius:6px; padding:26px 10px 10px; margin-bottom:8px;
+    display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; position:relative; }
+  .ed-celda .celda-del{ z-index:2; }
   .ed-celda label{ font-size:10.5px; color:var(--muted); font-weight:700; display:block; margin-bottom:2px; text-transform:uppercase; }
   .ed-celda input, .ed-celda select, .ed-celda textarea{ width:100%; padding:6px 8px; border:1px solid var(--gray-line); border-radius:4px; font-size:12px; font-family:inherit; }
   .ed-celda .full{ grid-column:1 / -1; }
@@ -535,7 +536,15 @@
       </div>
 
       <div class="help-box" style="margin-bottom:18px;">
-        <b>11. Las imágenes no aparecen</b>
+        <b>11. Eliminar una celda específica de un bloque</b>
+        <p style="margin:8px 0 0;">Cada celda de una sección de bloques tiene un botón <b>✕</b> en su esquina superior
+        derecha para borrarla individualmente, sin afectar las demás celdas del mismo bloque ni tener que rehacer
+        el bloque completo. Si es la única celda del bloque, al eliminarla se pregunta si también quieres quitar
+        el bloque vacío.</p>
+      </div>
+
+      <div class="help-box" style="margin-bottom:18px;">
+        <b>12. Las imágenes no aparecen</b>
         <p style="margin:8px 0 0;">Si subiste fotos a <code>fotos/</code> o <code>imagenes/</code> directamente en GitHub
         y no las ves en la galería o en el selector del editor, lo más probable es que falte agregarlas al
         <code>manifest.json</code> correspondiente. La forma más confiable de evitar este paso manual es usar
@@ -1877,11 +1886,14 @@ function renderEditor(){
         bhead.querySelector('button').addEventListener('click', () => { sec.bloques.splice(bi,1); sec._open = true; renderEditor(); });
         bdiv.appendChild(bhead);
 
-        bl.celdas.forEach(c => {
+        bl.celdas.forEach((c, ci) => {
           const cd = document.createElement('div');
           cd.className = 'ed-celda';
+          cd.style.position = 'relative';
           cd.innerHTML =
-            '<div><label>Contenido</label><select class="f-cont">'
+            '<button class="ed-btn danger celda-del" title="Eliminar esta celda" '
+              + 'style="position:absolute; top:6px; right:6px; padding:2px 8px; font-size:11px; line-height:1.4;">✕</button>'
+            + '<div><label>Contenido</label><select class="f-cont">'
               + ['texto','imagen','imagen+texto'].map(v => '<option' + (c.contenido===v?' selected':'') + '>' + v + '</option>').join('') + '</select></div>'
             + '<div><label>Fondo</label><div class="swatches">'
               + FONDOS.map(v => '<span class="swatch sw-' + v + (c.fondo===v?' sel':'') + '" data-v="' + v + '" title="' + v + '"></span>').join('') + '</div></div>'
@@ -1892,6 +1904,17 @@ function renderEditor(){
             + '<div class="full"><label>Detalle</label><textarea rows="2" class="f-det">' + (c.detalle||'') + '</textarea></div>'
             + '<div class="full"><label>Imagen</label><div class="img-pick"><select class="f-img">' + imgOptions(c.imagen) + '</select>'
               + '<img class="img-prev" src="' + (c.imagen ? resolveImg(c.imagen) : '') + '" style="' + (c.imagen?'':'display:none;') + '"></div></div>';
+          cd.querySelector('.celda-del').addEventListener('click', () => {
+            if(bl.celdas.length <= 1){
+              if(confirm('Es la única celda de este bloque. ¿Eliminar también el bloque completo?')){
+                sec.bloques.splice(bi,1); sec._open = true; renderEditor();
+              }
+              return;
+            }
+            if(confirm('¿Eliminar esta celda? Las demás celdas del bloque no se ven afectadas.')){
+              bl.celdas.splice(ci,1); sec._open = true; renderEditor();
+            }
+          });
           cd.querySelector('.f-cont').addEventListener('change', e => c.contenido = e.target.value);
           cd.querySelector('.f-cifra').addEventListener('input', e => c.cifra = e.target.value);
           cd.querySelector('.f-aj').addEventListener('change', e => c.ajuste = e.target.value);
