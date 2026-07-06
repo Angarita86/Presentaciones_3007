@@ -55,10 +55,22 @@ constante `EXPECTED` en `index.html`.
    (mismos nombres de hoja y columnas — la estructura está en el Manual de usuario dentro del informe).
 2. **Fotos:** sube las imágenes nuevas a la carpeta `fotos/` y actualiza `fotos/manifest.json`
    agregando el archivo al sujeto correspondiente (o un sujeto nuevo con `titulo`, `detalle` y `archivos`).
-3. **Diseño:** abre el informe publicado → hoja **Configuración** → ajusta fecha de corte,
-   nombres de hojas o logo → botón **"Descargar config.json"** → sube ese archivo al
-   repositorio reemplazando el `config.json` existente.
-4. Los cambios quedan publicados automáticamente ~1 minuto después de subirlos.
+3. **Diseño de las diapositivas:** el orden, la visibilidad y el contenido de las secciones vive en la hoja
+   `Diapositivas` del mismo Excel. Puedes editarla a mano, o usar el editor visual del informe
+   (**Configuración → Diseño de hojas**): activar/desactivar secciones, reordenarlas y crear secciones de
+   "bloques" (celdas de texto, imagen o imagen+texto, con título, detalle, cifra, fondo y ajuste de imagen).
+   Al terminar, botón **"Descargar Excel actualizado"** → sube ese archivo como `data/informe.xlsx`.
+4. **Configuración global:** fecha de corte, nombres de hojas y logo → hoja **Configuración** →
+   **"Descargar config.json"** → súbelo reemplazando el existente.
+5. Los cambios quedan publicados automáticamente ~1 minuto después de subirlos.
+
+### Hoja `Diapositivas` (estructura)
+
+Columnas: `Seccion`, `Orden`, `Tipo` (`tabla` · `contactabilidad` · `mapa` · `bloques`), `Activa` (SI/NO),
+`Fuente` (para tipo tabla: nombre de la hoja de datos), y para tipo `bloques` una fila por celda con:
+`Bloque` (1-4), `Celda` (1-4), `Contenido` (`texto` · `imagen` · `imagen+texto`), `Titulo`, `Detalle`,
+`Cifra`, `Fondo` (`blanco` · `azul` · `dorado` · `rojo` · `gris`), `Imagen` (nombre de archivo en `fotos/`)
+y `Ajuste` (`recortar` · `completa`).
 
 ## Probar en el computador antes de subir
 

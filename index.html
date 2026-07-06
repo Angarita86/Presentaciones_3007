@@ -287,6 +287,39 @@
   .login-error.show{ display:block; }
   .login-ribbon{ height:5px; border-radius:3px; margin-bottom:18px;
     background:linear-gradient(to right, #2B2B2B 0 25%, var(--gold) 25% 50%, var(--navy) 50% 75%, var(--red) 75% 100%); }
+
+  /* ===== Diapositivas tipo bloques ===== */
+  .bloque{ display:grid; gap:16px; margin-bottom:16px; }
+  .bloque.c1{ grid-template-columns:1fr; } .bloque.c2{ grid-template-columns:repeat(2,1fr); }
+  .bloque.c3{ grid-template-columns:repeat(3,1fr); } .bloque.c4{ grid-template-columns:repeat(4,1fr); }
+  .bcell{ border:1px solid var(--gray-line); border-radius:8px; overflow:hidden; display:flex; flex-direction:column; background:#fff; }
+  .bcell img.rec{ width:100%; height:200px; object-fit:cover; display:block; }
+  .bcell img.comp{ width:100%; height:auto; display:block; }
+  .bcell .bbody{ padding:14px 16px; }
+  .bcell .btitulo{ margin:0 0 6px; color:var(--navy); font-size:14px; font-weight:800; }
+  .bcell .bdetalle{ margin:0; font-size:12.5px; line-height:1.55; color:#333; }
+  .bcell .bkpi{ font-size:30px; font-weight:900; line-height:1.1; color:var(--navy); }
+  .bg-azul{ background:var(--navy); border-color:var(--navy); }
+  .bg-azul .btitulo, .bg-azul .bdetalle, .bg-azul .bkpi{ color:#fff; }
+  .bg-dorado{ background:#FDF4D7; border-color:#EFD98A; } .bg-dorado .bkpi, .bg-dorado .btitulo{ color:#8A6400; }
+  .bg-rojo{ background:#FBEBED; border-color:#EFB9C0; } .bg-rojo .bkpi, .bg-rojo .btitulo{ color:var(--red); }
+  .bg-gris{ background:#F3F5F8; }
+  /* ===== Editor de diseño ===== */
+  .ed-section{ border:1px solid var(--gray-line); border-radius:8px; margin-bottom:14px; background:#fff; }
+  .ed-head{ display:flex; align-items:center; gap:10px; padding:12px 14px; flex-wrap:wrap; }
+  .ed-head .ed-tipo{ font-size:11px; background:#EEF3FA; color:var(--navy); font-weight:800; padding:3px 10px; border-radius:12px; }
+  .ed-head input[type=text]{ flex:1; min-width:200px; padding:7px 10px; border:1px solid var(--gray-line); border-radius:5px; font-size:13px; font-family:inherit; }
+  .ed-btn{ border:1px solid var(--gray-line); background:#fff; border-radius:5px; padding:6px 10px; font-size:12px; cursor:pointer; font-family:inherit; }
+  .ed-btn:hover{ background:#F3F5F8; }
+  .ed-btn.danger{ color:var(--red); border-color:#EFB9C0; }
+  .ed-body{ padding:0 14px 14px; }
+  .ed-bloque{ border:1px dashed var(--gray-line); border-radius:6px; padding:10px 12px; margin-bottom:10px; }
+  .ed-bloque-head{ display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:12px; color:#555; font-weight:700; }
+  .ed-celda{ background:#FAFBFC; border:1px solid var(--gray-line); border-radius:6px; padding:10px; margin-bottom:8px;
+    display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; }
+  .ed-celda label{ font-size:10.5px; color:var(--muted); font-weight:700; display:block; margin-bottom:2px; text-transform:uppercase; }
+  .ed-celda input, .ed-celda select, .ed-celda textarea{ width:100%; padding:6px 8px; border:1px solid var(--gray-line); border-radius:4px; font-size:12px; font-family:inherit; }
+  .ed-celda .full{ grid-column:1 / -1; }
 </style>
 </head>
 <body>
@@ -328,6 +361,7 @@
   <div class="submenu open" id="configSubmenu">
     <button class="nav-sub" data-page="manual">Manual de usuario</button>
     <button class="nav-sub active" data-page="config">Configuración</button>
+    <button class="nav-sub" data-page="diseno">Diseño de hojas</button>
   </div>
   <button class="nav-item" data-page="informe">Informe</button>
   <button class="nav-item" data-page="fotos">Registro Fotográfico</button>
@@ -389,8 +423,20 @@
         sus acciones, sujetos y municipios; el panel derecho lista los departamentos ordenados de mayor a menor actividad.</p>
       </div>
 
+      <div class="help-box" style="margin-bottom:18px;">
+        <b>6. Diseño de hojas (hoja Diapositivas del Excel)</b>
+        <p style="margin:8px 0 0;">El orden, la visibilidad y el contenido de las secciones del Informe se definen en la hoja
+        <code>Diapositivas</code> del Excel. Puedes editarla directamente en Excel, o de forma visual en
+        <b>Configuración → Diseño de hojas</b>: activar/desactivar secciones, reordenarlas (▲▼), y crear secciones
+        tipo "bloques" (de 1 a 4 bloques horizontales, cada uno con 1 a 4 celdas de texto, imagen o imagen+texto,
+        con título, detalle, cifra destacada, fondo de color y ajuste de imagen). Al terminar, usa
+        <b>"Descargar Excel actualizado"</b> y sube ese archivo al repositorio como <code>data/informe.xlsx</code>
+        para que el diseño quede permanente. Las imágenes se referencian por su nombre de archivo en la carpeta
+        <code>fotos/</code>.</p>
+      </div>
+
       <div class="help-box">
-        <b>6. Importante al compartir</b>
+        <b>7. Importante al compartir</b>
         <p style="margin:8px 0 0;">Los cambios hechos en el navegador (Excel cargado, fotos, logo, fecha) <b>no se guardan dentro del
         archivo HTML</b>: viven solo en la sesión abierta. Para presentar, abre el archivo y carga los insumos al inicio de la reunión;
         o comparte el HTML junto con el Excel del corte para que cada persona los cargue. Si se requiere dejar una versión "congelada"
@@ -470,6 +516,23 @@
     </div>
   </div>
 
+  <!-- ===================== DISEÑO DE HOJAS (editor) ===================== -->
+  <div class="page" id="page-diseno">
+    <div class="slide">
+      <div class="slide-eyebrow">Configuración · Diseño de hojas</div>
+      <h2>Diseño de hojas del informe</h2>
+      <p class="subtitle">Define el orden, la visibilidad y el contenido de cada sección. El diseño vive en la hoja
+      <code>Diapositivas</code> del Excel: al terminar, descarga el Excel actualizado y súbelo al repositorio.</p>
+
+      <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px;">
+        <button class="upload-btn" style="border:none; font-family:inherit;" onclick="agregarSeccionBloques()">+ Agregar sección de bloques</button>
+        <button class="upload-btn" style="border:none; font-family:inherit; background:var(--gold); color:#3a2c00;" onclick="renderDesign(); alert('Cambios aplicados a la vista del Informe.');">Aplicar cambios al Informe</button>
+        <button class="upload-btn" style="border:none; font-family:inherit; background:var(--red);" onclick="descargarExcelActualizado()">Descargar Excel actualizado</button>
+      </div>
+      <div id="designEditor"></div>
+    </div>
+  </div>
+
   <!-- ===================== INFORME (todo el contenido en scroll continuo) ===================== -->
   <div class="page" id="page-informe">
 
@@ -485,7 +548,7 @@
     </div>
 
   <!-- ===================== MAQUINARIA AMARILLA ===================== -->
-    <div class="slide">
+    <div class="slide" id="slide-maquinaria">
       <div class="slide-eyebrow">Sección 1</div>
       <h2>Sujetos con maquinaria amarilla</h2>
       <div class="table-scroll">
@@ -503,7 +566,7 @@
     </div>
 
   <!-- ===================== DOCUMENTACION COMPLETA ===================== -->
-    <div class="slide">
+    <div class="slide" id="slide-doccompleta">
       <div class="slide-eyebrow">Sección 2</div>
       <h2>Sujetos con documentación completa</h2>
       <div class="table-scroll">
@@ -521,7 +584,7 @@
     </div>
 
   <!-- ===================== ACOMPAÑAMIENTO ===================== -->
-    <div class="slide">
+    <div class="slide" id="slide-acompanamiento">
       <div class="slide-eyebrow">Sección 3</div>
       <h2>Sujetos con acompañamiento para envío de la documentación</h2>
       <div class="table-scroll">
@@ -535,7 +598,7 @@
     </div>
 
   <!-- ===================== REHABILITACION ===================== -->
-    <div class="slide">
+    <div class="slide" id="slide-rehabilitacion">
       <div class="slide-eyebrow">Sección 4</div>
       <h2>Acciones rehabilitación</h2>
       <div class="table-scroll">
@@ -553,7 +616,7 @@
     </div>
 
   <!-- ===================== CONTACTABILIDAD ===================== -->
-    <div class="slide">
+    <div class="slide" id="slide-contactabilidad">
       <div class="slide-eyebrow">Sección 5</div>
       <h2>Seguimiento de Contactabilidad</h2>
 
@@ -583,7 +646,7 @@
     </div>
 
   <!-- ===================== MAPA COLOMBIA ===================== -->
-    <div class="slide">
+    <div class="slide" id="slide-mapa">
       <div class="slide-eyebrow">Sección 6</div>
       <h2>Mapa de implementación por departamento</h2>
       <p class="subtitle">Departamentos donde se están adelantando acciones del PIRC, independientemente de su estado de implementación.</p>
@@ -612,7 +675,7 @@
     </div>
 
   <!-- ===================== GRACIAS ===================== -->
-    <div class="slide thanks">
+    <div class="slide thanks" id="slide-gracias">
       <div class="big">GRACIAS</div>
     </div>
 
@@ -972,6 +1035,7 @@ document.getElementById('excelInputHoja1').addEventListener('change', function(e
         drawMap(deptData);
         document.getElementById('sourceNoteMapa').textContent = 'Fuente: ' + file.name + ' (hoja Insumo_Sujetos)';
       }
+      if(window.onWorkbookLoaded) window.onWorkbookLoaded(wb);
       statusEl.className='ok';
       statusEl.textContent = 'Actualizado: ' + found.length + ' de ' + expected.length + ' hojas encontradas (' + found.join(', ') + ').';
     }catch(err){
@@ -1091,6 +1155,7 @@ fetch('fotos/manifest.json')
         detalle: g.detalle || '',
         imagenes: (g.archivos || []).map((f, i) => ({ num: i+1, data: 'fotos/' + f, nombre: f }))
       };
+      (g.archivos || []).forEach(f => { if(window.photoIndex) window.photoIndex[f] = 'fotos/' + f; });
     });
     renderPhotoGallery(groups);
     const st = document.getElementById('photoStatus');
@@ -1132,6 +1197,7 @@ function loadPhotosFromFileList(fileList){
       const key = subjectKeyFromFilename(file.name);
       if(!groups[key]) groups[key] = { titulo: titleFromKey(key), detalle: '', imagenes: [] };
       groups[key].imagenes.push({ num: groups[key].imagenes.length + 1, data: evt.target.result, nombre: file.name });
+      if(window.photoIndex) window.photoIndex[file.name] = evt.target.result;
       loaded++;
       if(loaded === files.length){
         // ordenar imagenes de cada grupo por nombre de archivo
@@ -1203,6 +1269,7 @@ fetch('data/informe.xlsx')
     }
     const st = document.getElementById('fileStatus');
     if(st){ st.className='ok'; st.textContent = 'Datos cargados automáticamente desde data/informe.xlsx del repositorio.'; }
+    if(window.onWorkbookLoaded) window.onWorkbookLoaded(wb);
   })
   .catch(()=>{ /* sin data/informe.xlsx: quedan los datos de ejemplo embebidos */ });
 
@@ -1222,6 +1289,245 @@ function exportarConfig(){
   a.click();
   URL.revokeObjectURL(a.href);
 }
+</script>
+
+
+<script>
+/* ============ MOTOR DE DISEÑO: hoja Diapositivas del Excel ============ */
+window.photoIndex = window.photoIndex || {};
+let LOADED_WB = null;
+const FONDOS = ['blanco','azul','dorado','rojo','gris'];
+const FIXED_ID = s => s.tipo==='mapa' ? 'slide-mapa'
+  : s.tipo==='contactabilidad' ? 'slide-contactabilidad'
+  : ({'Maquinaria_Amarilla':'slide-maquinaria','Documentacion_Completa':'slide-doccompleta',
+      'Acompanamiento_Documentacion':'slide-acompanamiento','Acciones_Rehabilitacion':'slide-rehabilitacion'})[s.fuente];
+
+function defaultDesign(){
+  return [
+    {titulo:'Sujetos con maquinaria amarilla', tipo:'tabla', fuente:'Maquinaria_Amarilla', activa:true},
+    {titulo:'Sujetos con documentación completa', tipo:'tabla', fuente:'Documentacion_Completa', activa:true},
+    {titulo:'Sujetos con acompañamiento para envío de la documentación', tipo:'tabla', fuente:'Acompanamiento_Documentacion', activa:true},
+    {titulo:'Acciones rehabilitación', tipo:'tabla', fuente:'Acciones_Rehabilitacion', activa:true},
+    {titulo:'Seguimiento de Contactabilidad', tipo:'contactabilidad', activa:true},
+    {titulo:'Mapa de implementación por departamento', tipo:'mapa', activa:true}
+  ];
+}
+let DESIGN = defaultDesign();
+
+function parseDiapositivas(rows){
+  const byOrden = {};
+  rows.forEach(r => {
+    const orden = Number(r['Orden']);
+    if(!orden && orden !== 0) return;
+    if(!byOrden[orden]){
+      byOrden[orden] = {
+        titulo: (r['Seccion']||'').toString(),
+        tipo: (r['Tipo']||'').toString().trim().toLowerCase(),
+        activa: (r['Activa']||'SI').toString().trim().toUpperCase() !== 'NO',
+        fuente: (r['Fuente']||'').toString().trim(),
+        bloquesMap: {}
+      };
+    }
+    const sec = byOrden[orden];
+    if(sec.tipo === 'bloques'){
+      const b = Number(r['Bloque'])||1, c = Number(r['Celda'])||1;
+      if(!sec.bloquesMap[b]) sec.bloquesMap[b] = {};
+      sec.bloquesMap[b][c] = {
+        contenido: (r['Contenido']||'texto').toString().trim().toLowerCase(),
+        titulo: (r['Titulo']||'').toString(),
+        detalle: (r['Detalle']||'').toString(),
+        cifra: (r['Cifra']||'').toString(),
+        fondo: (r['Fondo']||'blanco').toString().trim().toLowerCase(),
+        imagen: (r['Imagen']||'').toString().trim(),
+        ajuste: (r['Ajuste']||'recortar').toString().trim().toLowerCase()
+      };
+    }
+  });
+  return Object.keys(byOrden).map(Number).sort((a,b)=>a-b).map(o=>{
+    const s = byOrden[o];
+    const bloques = Object.keys(s.bloquesMap).map(Number).sort((a,b)=>a-b)
+      .map(b => ({ celdas: Object.keys(s.bloquesMap[b]).map(Number).sort((a,b)=>a-b).map(c => s.bloquesMap[b][c]) }));
+    return {titulo:s.titulo, tipo:s.tipo, activa:s.activa, fuente:s.fuente, bloques};
+  });
+}
+
+function resolveImg(name){ return window.photoIndex[name] || ('fotos/' + name); }
+
+function buildBloquesSlide(sec, idx){
+  const slide = document.createElement('div');
+  slide.className = 'slide custom-slide';
+  let inner = '<div class="slide-eyebrow">Sección ' + idx + '</div><h2>' + (sec.titulo||'') + '</h2>';
+  (sec.bloques||[]).forEach(bl => {
+    const n = Math.min(Math.max(bl.celdas.length,1),4);
+    inner += '<div class="bloque c' + n + '">';
+    bl.celdas.forEach(c => {
+      const bg = (c.fondo && c.fondo !== 'blanco') ? ' bg-' + c.fondo : '';
+      inner += '<div class="bcell' + bg + '">';
+      if(c.contenido !== 'texto' && c.imagen){
+        const cls = (c.ajuste === 'completa') ? 'comp' : 'rec';
+        inner += '<img class="' + cls + '" src="' + resolveImg(c.imagen) + '" alt="">';
+      }
+      if(c.contenido !== 'imagen' && (c.titulo || c.detalle || c.cifra)){
+        inner += '<div class="bbody">';
+        if(c.cifra) inner += '<div class="bkpi">' + c.cifra + '</div>';
+        if(c.titulo) inner += '<div class="btitulo">' + c.titulo + '</div>';
+        if(c.detalle) inner += '<div class="bdetalle">' + c.detalle + '</div>';
+        inner += '</div>';
+      }
+      inner += '</div>';
+    });
+    inner += '</div>';
+  });
+  slide.innerHTML = inner;
+  const f = document.createElement('img');
+  f.src = FOOTER_LOGO_SRC; f.className = 'slide-footer-logo'; f.alt = '';
+  slide.appendChild(f);
+  return slide;
+}
+
+function renderDesign(){
+  const page = document.getElementById('page-informe');
+  const gracias = document.getElementById('slide-gracias');
+  page.querySelectorAll('.custom-slide').forEach(el => el.remove());
+  ['slide-maquinaria','slide-doccompleta','slide-acompanamiento','slide-rehabilitacion','slide-contactabilidad','slide-mapa']
+    .forEach(id => { const el = document.getElementById(id); if(el) el.style.display = 'none'; });
+  let idx = 0;
+  DESIGN.forEach(sec => {
+    idx++;
+    if(sec.tipo === 'bloques'){
+      const el = buildBloquesSlide(sec, idx);
+      if(!sec.activa) el.style.display = 'none';
+      page.insertBefore(el, gracias);
+    } else {
+      const el = document.getElementById(FIXED_ID(sec) || '');
+      if(!el) return;
+      el.style.display = sec.activa ? '' : 'none';
+      const eb = el.querySelector('.slide-eyebrow');
+      if(eb) eb.textContent = 'Sección ' + idx;
+      page.insertBefore(el, gracias);
+    }
+  });
+}
+
+/* ============ EDITOR ============ */
+function nuevaCelda(){ return {contenido:'texto', titulo:'', detalle:'', cifra:'', fondo:'blanco', imagen:'', ajuste:'recortar'}; }
+function agregarSeccionBloques(){
+  DESIGN.push({titulo:'Nueva sección', tipo:'bloques', activa:true, fuente:'', bloques:[{celdas:[nuevaCelda()]}]});
+  renderEditor();
+}
+function renderEditor(){
+  const box = document.getElementById('designEditor');
+  if(!box) return;
+  box.innerHTML = '';
+  DESIGN.forEach((sec, si) => {
+    const card = document.createElement('div');
+    card.className = 'ed-section';
+    const tipoLabel = sec.tipo === 'bloques' ? 'BLOQUES' : sec.tipo === 'tabla' ? 'TABLA · ' + sec.fuente : sec.tipo.toUpperCase();
+    let head = '<div class="ed-head">'
+      + '<input type="checkbox" ' + (sec.activa?'checked':'') + ' data-act="' + si + '" title="Mostrar/ocultar">'
+      + '<span class="ed-tipo">' + tipoLabel + '</span>'
+      + '<input type="text" value="' + (sec.titulo||'').replace(/"/g,'&quot;') + '" data-tit="' + si + '"' + (sec.tipo!=='bloques' ? ' disabled title="El título de las secciones de datos es fijo"' : '') + '>'
+      + '<button class="ed-btn" data-up="' + si + '">▲</button>'
+      + '<button class="ed-btn" data-down="' + si + '">▼</button>'
+      + (sec.tipo === 'bloques' ? '<button class="ed-btn danger" data-del="' + si + '">Eliminar</button>' : '')
+      + '</div>';
+    let body = '';
+    if(sec.tipo === 'bloques'){
+      body = '<div class="ed-body">';
+      sec.bloques.forEach((bl, bi) => {
+        body += '<div class="ed-bloque"><div class="ed-bloque-head">Bloque ' + (bi+1)
+          + ' · celdas: <select data-ncel="' + si + '-' + bi + '">'
+          + [1,2,3,4].map(n => '<option value="' + n + '"' + (bl.celdas.length===n?' selected':'') + '>' + n + '</option>').join('')
+          + '</select>'
+          + '<button class="ed-btn danger" data-delb="' + si + '-' + bi + '">Quitar bloque</button></div>';
+        bl.celdas.forEach((c, ci) => {
+          const k = si + '-' + bi + '-' + ci;
+          body += '<div class="ed-celda">'
+            + '<div><label>Contenido</label><select data-f="contenido" data-k="' + k + '">'
+            + ['texto','imagen','imagen+texto'].map(v => '<option' + (c.contenido===v?' selected':'') + '>' + v + '</option>').join('') + '</select></div>'
+            + '<div><label>Fondo</label><select data-f="fondo" data-k="' + k + '">'
+            + FONDOS.map(v => '<option' + (c.fondo===v?' selected':'') + '>' + v + '</option>').join('') + '</select></div>'
+            + '<div><label>Cifra destacada</label><input data-f="cifra" data-k="' + k + '" value="' + (c.cifra||'').replace(/"/g,'&quot;') + '"></div>'
+            + '<div><label>Ajuste imagen</label><select data-f="ajuste" data-k="' + k + '">'
+            + ['recortar','completa'].map(v => '<option' + (c.ajuste===v?' selected':'') + '>' + v + '</option>').join('') + '</select></div>'
+            + '<div class="full"><label>Título</label><input data-f="titulo" data-k="' + k + '" value="' + (c.titulo||'').replace(/"/g,'&quot;') + '"></div>'
+            + '<div class="full"><label>Detalle</label><textarea rows="2" data-f="detalle" data-k="' + k + '">' + (c.detalle||'') + '</textarea></div>'
+            + '<div class="full"><label>Imagen (nombre de archivo en fotos/, ej: Flamenco_1.jpeg)</label><input data-f="imagen" data-k="' + k + '" value="' + (c.imagen||'').replace(/"/g,'&quot;') + '"></div>'
+            + '</div>';
+        });
+        body += '</div>';
+      });
+      body += '<button class="ed-btn" data-addb="' + si + '">+ Agregar bloque</button></div>';
+    }
+    card.innerHTML = head + body;
+    box.appendChild(card);
+  });
+
+  box.querySelectorAll('[data-act]').forEach(el => el.addEventListener('change', e => { DESIGN[+e.target.dataset.act].activa = e.target.checked; }));
+  box.querySelectorAll('[data-tit]').forEach(el => el.addEventListener('input', e => { DESIGN[+e.target.dataset.tit].titulo = e.target.value; }));
+  box.querySelectorAll('[data-up]').forEach(el => el.addEventListener('click', e => {
+    const i = +e.target.dataset.up; if(i>0){ [DESIGN[i-1],DESIGN[i]] = [DESIGN[i],DESIGN[i-1]]; renderEditor(); }
+  }));
+  box.querySelectorAll('[data-down]').forEach(el => el.addEventListener('click', e => {
+    const i = +e.target.dataset.down; if(i<DESIGN.length-1){ [DESIGN[i+1],DESIGN[i]] = [DESIGN[i],DESIGN[i+1]]; renderEditor(); }
+  }));
+  box.querySelectorAll('[data-del]').forEach(el => el.addEventListener('click', e => {
+    if(confirm('¿Eliminar esta sección?')){ DESIGN.splice(+e.target.dataset.del,1); renderEditor(); }
+  }));
+  box.querySelectorAll('[data-addb]').forEach(el => el.addEventListener('click', e => {
+    DESIGN[+e.target.dataset.addb].bloques.push({celdas:[nuevaCelda()]}); renderEditor();
+  }));
+  box.querySelectorAll('[data-delb]').forEach(el => el.addEventListener('click', e => {
+    const [si,bi] = e.target.dataset.delb.split('-').map(Number);
+    DESIGN[si].bloques.splice(bi,1); renderEditor();
+  }));
+  box.querySelectorAll('[data-ncel]').forEach(el => el.addEventListener('change', e => {
+    const [si,bi] = e.target.dataset.ncel.split('-').map(Number);
+    const celdas = DESIGN[si].bloques[bi].celdas, n = +e.target.value;
+    while(celdas.length < n) celdas.push(nuevaCelda());
+    celdas.length = n;
+    renderEditor();
+  }));
+  box.querySelectorAll('[data-f]').forEach(el => el.addEventListener('input', e => {
+    const [si,bi,ci] = e.target.dataset.k.split('-').map(Number);
+    DESIGN[si].bloques[bi].celdas[ci][e.target.dataset.f] = e.target.value;
+  }));
+}
+
+/* ============ EXPORTAR EXCEL ACTUALIZADO ============ */
+function descargarExcelActualizado(){
+  const wb = LOADED_WB || XLSX.utils.book_new();
+  const aoa = [['Seccion','Orden','Tipo','Activa','Fuente','Bloque','Celda','Contenido','Titulo','Detalle','Cifra','Fondo','Imagen','Ajuste']];
+  DESIGN.forEach((sec, i) => {
+    const orden = i+1, act = sec.activa ? 'SI' : 'NO';
+    if(sec.tipo === 'bloques'){
+      sec.bloques.forEach((bl, bi) => bl.celdas.forEach((c, ci) => {
+        aoa.push([sec.titulo, orden, 'bloques', act, '', bi+1, ci+1, c.contenido, c.titulo, c.detalle, c.cifra, c.fondo, c.imagen, c.ajuste]);
+      }));
+      if(!sec.bloques.length) aoa.push([sec.titulo, orden, 'bloques', act, '', '', '', '', '', '', '', '', '', '']);
+    } else {
+      aoa.push([sec.titulo, orden, sec.tipo, act, sec.fuente||'', '', '', '', '', '', '', '', '', '']);
+    }
+  });
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [{wch:34},{wch:8},{wch:14},{wch:8},{wch:26},{wch:8},{wch:8},{wch:14},{wch:26},{wch:50},{wch:10},{wch:10},{wch:20},{wch:10}];
+  if(wb.SheetNames.includes('Diapositivas')){ wb.Sheets['Diapositivas'] = ws; }
+  else { XLSX.utils.book_append_sheet(wb, ws, 'Diapositivas'); }
+  XLSX.writeFile(wb, 'informe.xlsx');
+}
+
+/* ============ HOOK DE CARGA ============ */
+window.onWorkbookLoaded = function(wb){
+  LOADED_WB = wb;
+  const rows = sheetToRows(wb, 'Diapositivas');
+  if(rows && rows.length){ DESIGN = parseDiapositivas(rows); }
+  renderDesign();
+  renderEditor();
+};
+
+/* estado inicial (sin Excel): diseño por defecto */
+renderDesign();
+renderEditor();
 </script>
 
 <script>
