@@ -315,8 +315,9 @@
   .ed-body{ padding:0 14px 14px; }
   .ed-bloque{ border:1px dashed var(--gray-line); border-radius:6px; padding:10px 12px; margin-bottom:10px; }
   .ed-bloque-head{ display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:12px; color:#555; font-weight:700; }
-  .ed-celda{ background:#FAFBFC; border:1px solid var(--gray-line); border-radius:6px; padding:10px; margin-bottom:8px;
-    display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; }
+  .ed-celda{ background:#FAFBFC; border:1px solid var(--gray-line); border-radius:6px; padding:26px 10px 10px; margin-bottom:8px;
+    display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; position:relative; }
+  .ed-celda .celda-del{ z-index:2; }
   .ed-celda label{ font-size:10.5px; color:var(--muted); font-weight:700; display:block; margin-bottom:2px; text-transform:uppercase; }
   .ed-celda input, .ed-celda select, .ed-celda textarea{ width:100%; padding:6px 8px; border:1px solid var(--gray-line); border-radius:4px; font-size:12px; font-family:inherit; }
   .ed-celda .full{ grid-column:1 / -1; }
@@ -514,6 +515,53 @@
         el flujo manual: Descargar Excel / config.json y subirlos al repositorio.</p>
       </div>
 
+      <div class="help-box" style="margin-bottom:18px;">
+        <b>9. Copia de seguridad y cómo revertir un error</b>
+        <p style="margin:8px 0 0;">Con la casilla "Crear copia de seguridad" activada (por defecto), cada vez que guardas
+        desde la app se guarda automáticamente una copia del Excel anterior en la carpeta <code>backups/</code> del
+        repositorio, con fecha y hora en el nombre (ej. <code>informe_2026-07-06_1453.xlsx</code>). Para revertir un error:
+        entra a esa carpeta en GitHub, descarga la copia que quieras recuperar y súbela reemplazando
+        <code>data/informe.xlsx</code>.</p>
+        <p style="margin:8px 0 0;">Además, GitHub guarda el <b>historial completo</b> de todo el repositorio aunque no
+        uses esta casilla: en la página del archivo (por ejemplo <code>index.html</code> o <code>data/informe.xlsx</code>)
+        hay un botón <b>"History"</b> que muestra todas las versiones anteriores y permite descargar cualquiera de ellas.</p>
+      </div>
+
+      <div class="help-box" style="margin-bottom:18px;">
+        <b>10. Eliminar tablas o secciones</b>
+        <p style="margin:8px 0 0;">El botón "Eliminar" del editor ya no es exclusivo de las secciones de bloques:
+        también funciona sobre las tablas (fijas o de hojas nuevas del Excel). Al eliminar una tabla, desaparece
+        de la vista del Informe/Caso y, al descargar o guardar el Excel actualizado, esa hoja ya no aparecerá
+        referenciada en <code>Diapositivas</code> — el cambio queda reflejado en ambos lados.</p>
+      </div>
+
+      <div class="help-box" style="margin-bottom:18px;">
+        <b>11. Eliminar una celda específica de un bloque</b>
+        <p style="margin:8px 0 0;">Cada celda de una sección de bloques tiene un botón <b>✕</b> en su esquina superior
+        derecha para borrarla individualmente, sin afectar las demás celdas del mismo bloque ni tener que rehacer
+        el bloque completo. Si es la única celda del bloque, al eliminarla se pregunta si también quieres quitar
+        el bloque vacío.</p>
+      </div>
+
+      <div class="help-box" style="margin-bottom:18px;">
+        <b>12. Corte de julio 2026</b>
+        <p style="margin:8px 0 0;">Este corte incorporó la hoja de datos <code>Acciones_suspendidas</code> (nueva
+        sección "Acciones Suspendidas" en el Informe) y el <b>Caso Emblemático "Kankuruas — Resguardo Indígena
+        Kankuamo"</b>, construido a partir del primer informe de avance de construcción de Kankuruas del Resguardo
+        Indígena Kankuamo. La hoja de datos <code>Sujetos_a_implementar</code> quedó disponible en el Excel para uso
+        futuro (no está referenciada en ninguna sección todavía).</p>
+      </div>
+
+      <div class="help-box" style="margin-bottom:18px;">
+        <b>13. Las imágenes no aparecen</b>
+        <p style="margin:8px 0 0;">Si subiste fotos a <code>fotos/</code> o <code>imagenes/</code> directamente en GitHub
+        y no las ves en la galería o en el selector del editor, lo más probable es que falte agregarlas al
+        <code>manifest.json</code> correspondiente. La forma más confiable de evitar este paso manual es usar
+        <b>Configuración → 8 · Imágenes disponibles en el repositorio → "Actualizar lista de imágenes desde GitHub"</b>
+        (con el token puesto): detecta automáticamente todas las imágenes reales de esas dos carpetas, sin depender
+        de los manifest.json.</p>
+      </div>
+
       <div class="help-box">
         <b>9. Importante al compartir</b>
         <p style="margin:8px 0 0;">Los cambios hechos en el navegador (Excel cargado, fotos, logo, fecha) <b>no se guardan dentro del
@@ -618,11 +666,24 @@
           <input type="text" id="ghRepo" value="Angarita86/Presentaciones_3007" style="margin-bottom:10px;">
           <label class="field-label">Token de acceso</label>
           <input type="password" id="ghToken" placeholder="github_pat_..." style="margin-bottom:12px;">
+          <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; color:#444; margin-bottom:12px; font-weight:normal;">
+            <input type="checkbox" id="ghBackup" checked style="width:auto;">
+            Crear copia de seguridad en <code>backups/</code> antes de guardar (recomendado)
+          </label>
           <div style="display:flex; gap:10px; flex-wrap:wrap;">
             <button class="upload-btn" style="border:none; font-family:inherit;" onclick="guardarEnGitHub()">Guardar Excel y config en el repositorio</button>
             <button class="ed-btn danger" style="font-family:inherit;" onclick="olvidarToken()">Olvidar token</button>
           </div>
           <span id="ghStatus" style="font-size:12.5px; color:var(--muted); margin-top:10px; display:block;"></span>
+        </div>
+
+        <div class="config-card gold">
+          <h3>8 · Imágenes disponibles en el repositorio</h3>
+          <p>Usa el mismo token de arriba para que el editor detecte automáticamente las imágenes que ya estén
+          subidas a <code>fotos/</code> e <code>imagenes/</code> en GitHub — sin depender de mantener los
+          <code>manifest.json</code> actualizados a mano.</p>
+          <button class="upload-btn" style="border:none; font-family:inherit; background:var(--gold); color:#3a2c00;" onclick="actualizarImagenesDesdeGitHub()">Actualizar lista de imágenes desde GitHub</button>
+          <span id="ghImgStatus" style="font-size:12.5px; color:var(--muted); margin-top:10px; display:block;"></span>
         </div>
       </div>
     </div>
@@ -1468,7 +1529,7 @@ function parseDiapositivas(rows){
 
   rows.forEach(r => {
     const hoja = ((r['Hoja']||'Informe')+'').trim();
-    const hl = hoja.toLowerCase();
+    const hl = hoja.trim().toLowerCase();
     const orden = Number(r['Orden']);
     const tipo = ((r['Tipo']||'')+'').trim().toLowerCase();
     const activa = ((r['Activa']||'SI')+'').trim().toUpperCase() !== 'NO';
@@ -1479,7 +1540,8 @@ function parseDiapositivas(rows){
         texto: (r['Detalle']||'')+''});
       return;
     }
-    const mCaso = hl.match(/^caso\s*([1-5])$/);
+    /* Tolerante a variantes: "Caso 1", "Caso1", "CASO 01", con espacios extra */
+    const mCaso = hl.replace(/\s+/g,' ').trim().match(/^caso\s*0*([1-5])\s*$/);
     if(mCaso){
       const ci = Number(mCaso[1]) - 1;
       if(tipo === 'hoja'){
@@ -1534,6 +1596,61 @@ function parseDiapositivas(rows){
 /* ---------- RENDER ---------- */
 function resolveImg(name){ return window.photoIndex[name] || ('fotos/' + name); }
 
+function escHtml(v){
+  if(v===null||v===undefined) return '';
+  return (v+'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function buildGenericTableSlide(sec, idx){
+  const slide = document.createElement('div');
+  slide.className = 'slide custom-slide';
+  let rows = null;
+  if(LOADED_WB) rows = sheetToRows(LOADED_WB, sec.fuente);
+  let inner = '<div class="slide-eyebrow">Sección ' + idx + '</div><h2>' + (sec.titulo||sec.fuente||'') + '</h2>';
+  if(!rows){
+    inner += '<p style="color:#c8102e; font-size:13px;">⚠️ No se encontró la hoja "<b>' + escHtml(sec.fuente) +
+      '</b>" en el Excel cargado. Verifica que el nombre en la columna <code>Fuente</code> coincida exactamente con el nombre de la hoja de Excel.</p>';
+  } else if(!rows.length){
+    inner += '<p style="color:#999; font-style:italic;">La hoja "' + escHtml(sec.fuente) + '" no tiene filas de datos.</p>';
+  } else {
+    const cols = Object.keys(rows[0]);
+    inner += '<div class="table-scroll"><table class="data"><thead><tr>' +
+      cols.map(c => '<th>' + escHtml(c) + '</th>').join('') + '</tr></thead><tbody>' +
+      rows.map(r => '<tr>' + cols.map(c => {
+        const v = r[c];
+        const disp = (typeof v === 'number') ? v.toLocaleString('es-CO') : escHtml(v);
+        return '<td>' + disp + '</td>';
+      }).join('') + '</tr>').join('') +
+      '</tbody></table></div>';
+  }
+  slide.innerHTML = inner;
+  const f = document.createElement('img');
+  f.src = FOOTER_LOGO_SRC; f.className = 'slide-footer-logo'; f.alt = '';
+  slide.appendChild(f);
+  return slide;
+}
+function buildSectionElement(sec, idx){
+  if(sec.tipo === 'bloques') return buildBloquesSlide(sec, idx);
+  if(sec.tipo === 'tabla'){
+    const fixedId = FIXED_ID(sec);
+    if(fixedId){
+      const el = document.getElementById(fixedId);
+      if(el){
+        el.style.display = sec.activa ? '' : 'none';
+        const eb = el.querySelector('.slide-eyebrow');
+        if(eb) eb.textContent = 'Sección ' + idx;
+        const h2 = el.querySelector('h2');
+        if(h2 && sec.titulo) h2.textContent = sec.titulo;
+        return el;
+      }
+    }
+    /* Hoja nueva sin renderizador fijo: tabla generica */
+    const gen = buildGenericTableSlide(sec, idx);
+    if(!sec.activa) gen.style.display = 'none';
+    return gen;
+  }
+  return null; /* mapa/contactabilidad se resuelven aparte, solo validos en Informe */
+}
+
 function buildBloquesSlide(sec, idx){
   const slide = document.createElement('div');
   slide.className = 'slide custom-slide';
@@ -1583,18 +1700,23 @@ function renderDesign(){
   let idx = 0;
   PAGES.informe.forEach(sec => {
     idx++;
-    if(sec.tipo === 'bloques'){
-      const el = buildBloquesSlide(sec, idx);
-      if(!sec.activa) el.style.display = 'none';
-      page.insertBefore(el, gracias);
-    } else {
+    if(sec.tipo === 'mapa' || sec.tipo === 'contactabilidad'){
       const el = document.getElementById(FIXED_ID(sec) || '');
       if(!el) return;
       el.style.display = sec.activa ? '' : 'none';
       const eb = el.querySelector('.slide-eyebrow');
       if(eb) eb.textContent = 'Sección ' + idx;
+      const h2m = el.querySelector('h2');
+      if(h2m && sec.titulo) h2m.textContent = sec.titulo;
       page.insertBefore(el, gracias);
+      return;
     }
+    const el = buildSectionElement(sec, idx);
+    if(!el) return;
+    if(!el.classList.contains('custom-slide') && el.parentElement === page){
+      /* elemento fijo ya reubicado por buildSectionElement */
+    }
+    page.insertBefore(el, gracias);
   });
   ensureCollapseButtons();
 }
@@ -1606,10 +1728,10 @@ function renderCasos(){
     page.querySelectorAll('.custom-slide').forEach(el => el.remove());
     let idx = 0;
     caso.secciones.forEach(sec => {
-      if(sec.tipo !== 'bloques') return;
+      if(sec.tipo !== 'bloques' && sec.tipo !== 'tabla') return;
       idx++;
-      const el = buildBloquesSlide(sec, idx);
-      if(!sec.activa) el.style.display = 'none';
+      const el = buildSectionElement(sec, idx);
+      if(!el) return;
       page.appendChild(el);
     });
     if(!idx){
@@ -1740,7 +1862,7 @@ function renderEditor(){
       + '<span class="ed-tipo">' + tipoLabel + '</span>'
       + '<input type="text" value="' + (sec.titulo||'').replace(/"/g,'&quot;') + '"' + (sec.tipo!=='bloques' ? ' disabled' : '') + '>'
       + '<button class="ed-btn">▲</button><button class="ed-btn">▼</button>'
-      + (sec.tipo === 'bloques' ? '<button class="ed-btn danger">Eliminar</button>' : '');
+      + ((sec.tipo === 'bloques' || sec.tipo === 'tabla') ? '<button class="ed-btn danger">Eliminar</button>' : '');
     card.appendChild(head);
     const hb = head.querySelectorAll('button, input');
     const expB = head.querySelector('.exp');
@@ -1750,7 +1872,12 @@ function renderEditor(){
     const btns = head.querySelectorAll('button.ed-btn:not(.exp)');
     btns[0].addEventListener('click', () => { if(si>0){ [secs[si-1],secs[si]]=[secs[si],secs[si-1]]; renderEditor(); } });
     btns[1].addEventListener('click', () => { if(si<secs.length-1){ [secs[si+1],secs[si]]=[secs[si],secs[si+1]]; renderEditor(); } });
-    if(btns[2]) btns[2].addEventListener('click', () => { if(confirm('¿Eliminar esta sección?')){ secs.splice(si,1); renderEditor(); } });
+    if(btns[2]) btns[2].addEventListener('click', () => {
+      const msg = sec.tipo === 'tabla'
+        ? '¿Eliminar esta tabla del diseño? Ya no aparecerá en el Informe/Caso ni en el próximo Excel que descargues o guardes.'
+        : '¿Eliminar esta sección?';
+      if(confirm(msg)){ secs.splice(si,1); renderEditor(); renderAll(); }
+    });
 
     if(sec.tipo === 'bloques'){
       const body = document.createElement('div');
@@ -1772,11 +1899,14 @@ function renderEditor(){
         bhead.querySelector('button').addEventListener('click', () => { sec.bloques.splice(bi,1); sec._open = true; renderEditor(); });
         bdiv.appendChild(bhead);
 
-        bl.celdas.forEach(c => {
+        bl.celdas.forEach((c, ci) => {
           const cd = document.createElement('div');
           cd.className = 'ed-celda';
+          cd.style.position = 'relative';
           cd.innerHTML =
-            '<div><label>Contenido</label><select class="f-cont">'
+            '<button class="ed-btn danger celda-del" title="Eliminar esta celda" '
+              + 'style="position:absolute; top:6px; right:6px; padding:2px 8px; font-size:11px; line-height:1.4;">✕</button>'
+            + '<div><label>Contenido</label><select class="f-cont">'
               + ['texto','imagen','imagen+texto'].map(v => '<option' + (c.contenido===v?' selected':'') + '>' + v + '</option>').join('') + '</select></div>'
             + '<div><label>Fondo</label><div class="swatches">'
               + FONDOS.map(v => '<span class="swatch sw-' + v + (c.fondo===v?' sel':'') + '" data-v="' + v + '" title="' + v + '"></span>').join('') + '</div></div>'
@@ -1787,6 +1917,17 @@ function renderEditor(){
             + '<div class="full"><label>Detalle</label><textarea rows="2" class="f-det">' + (c.detalle||'') + '</textarea></div>'
             + '<div class="full"><label>Imagen</label><div class="img-pick"><select class="f-img">' + imgOptions(c.imagen) + '</select>'
               + '<img class="img-prev" src="' + (c.imagen ? resolveImg(c.imagen) : '') + '" style="' + (c.imagen?'':'display:none;') + '"></div></div>';
+          cd.querySelector('.celda-del').addEventListener('click', () => {
+            if(bl.celdas.length <= 1){
+              if(confirm('Es la única celda de este bloque. ¿Eliminar también el bloque completo?')){
+                sec.bloques.splice(bi,1); sec._open = true; renderEditor();
+              }
+              return;
+            }
+            if(confirm('¿Eliminar esta celda? Las demás celdas del bloque no se ven afectadas.')){
+              bl.celdas.splice(ci,1); sec._open = true; renderEditor();
+            }
+          });
           cd.querySelector('.f-cont').addEventListener('change', e => c.contenido = e.target.value);
           cd.querySelector('.f-cifra').addEventListener('input', e => c.cifra = e.target.value);
           cd.querySelector('.f-aj').addEventListener('change', e => c.ajuste = e.target.value);
@@ -1876,36 +2017,96 @@ async function ghRequest(url, token, opts){
   }, opts.headers || {});
   return fetch(url, opts);
 }
-async function ghPutFile(repo, path, token, base64content, message){
+async function ghGetFile(repo, path, token){
   const base = 'https://api.github.com/repos/' + repo + '/contents/' + path;
-  let sha = null;
   const g = await ghRequest(base + '?ref=main', token);
-  if(g.ok){ sha = (await g.json()).sha; }
-  else if(g.status !== 404){ throw new Error('Error leyendo ' + path + ' (HTTP ' + g.status + ')'); }
+  if(g.status === 404) return null;
+  if(!g.ok) throw new Error('Error leyendo ' + path + ' (HTTP ' + g.status + ')');
+  return await g.json();
+}
+async function ghPutFile(repo, path, token, base64content, message, shaConocido){
+  const base = 'https://api.github.com/repos/' + repo + '/contents/' + path;
+  let sha = shaConocido;
+  if(sha === undefined){
+    const g = await ghRequest(base + '?ref=main', token);
+    if(g.ok){ sha = (await g.json()).sha; }
+    else if(g.status !== 404){ throw new Error('Error leyendo ' + path + ' (HTTP ' + g.status + ')'); }
+    else sha = null;
+  }
   const body = { message: message, content: base64content, branch: 'main' };
   if(sha) body.sha = sha;
   const p = await ghRequest(base, token, { method:'PUT', body: JSON.stringify(body) });
   if(!p.ok) throw new Error('Error guardando ' + path + ' (HTTP ' + p.status + ')');
 }
+function timestampBackup(){
+  const d = new Date();
+  const pad = n => (n<10?'0':'')+n;
+  return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + '_' + pad(d.getHours()) + pad(d.getMinutes());
+}
 async function guardarEnGitHub(){
   const st = document.getElementById('ghStatus');
   const repo = document.getElementById('ghRepo').value.trim();
   const token = document.getElementById('ghToken').value.trim();
+  const hacerBackup = document.getElementById('ghBackup').checked;
   if(!repo || !token){ st.className='err'; st.textContent = 'Escribe el repositorio y el token.'; return; }
   try{ localStorage.setItem('gh_token', token); }catch(e){}
   st.className=''; st.textContent = 'Guardando en el repositorio…';
   try{
+    if(hacerBackup){
+      st.textContent = 'Creando copia de seguridad…';
+      const actual = await ghGetFile(repo, 'data/informe.xlsx', token);
+      if(actual){
+        await ghPutFile(repo, 'backups/informe_' + timestampBackup() + '.xlsx', token, actual.content.replace(/\n/g,''),
+          'Copia de seguridad automática antes de actualizar', null);
+      }
+    }
+    st.textContent = 'Guardando Excel…';
     const xlsxB64 = XLSX.write(buildWorkbook(), {type:'base64', bookType:'xlsx'});
     await ghPutFile(repo, 'data/informe.xlsx', token, xlsxB64, 'Actualización de diseño desde el informe interactivo');
+    st.textContent = 'Guardando configuración…';
     const cfgB64 = btoa(unescape(encodeURIComponent(JSON.stringify(getConfigObj(), null, 2))));
     await ghPutFile(repo, 'config.json', token, cfgB64, 'Actualización de configuración desde el informe interactivo');
-    st.className='ok'; st.textContent = 'Guardado en el repositorio. La página publicada se actualiza en ~1 minuto.';
+    st.className='ok';
+    st.textContent = hacerBackup
+      ? 'Guardado con copia de seguridad previa en backups/. La página publicada se actualiza en ~1 minuto.'
+      : 'Guardado en el repositorio. La página publicada se actualiza en ~1 minuto.';
   }catch(err){
     st.className='err';
     st.textContent = 'No se pudo guardar: ' + err.message + '. Verifica el token (permiso Contents: Read and write) y el nombre del repositorio.';
   }
 }
-try{ const t = localStorage.getItem('gh_token'); if(t) document.getElementById('ghToken').value = t; }catch(e){}
+
+/* ============ LISTAR IMAGENES REALES DEL REPOSITORIO (via API, evita manifest.json desincronizado) ============ */
+async function actualizarImagenesDesdeGitHub(){
+  const repo = document.getElementById('ghRepo').value.trim();
+  const token = document.getElementById('ghToken').value.trim();
+  const st = document.getElementById('ghImgStatus');
+  if(!repo || !token){ if(st){ st.className='err'; st.textContent='Falta repositorio o token.'; } return; }
+  if(st){ st.className=''; st.textContent = 'Consultando fotos/ e imagenes/…'; }
+  let total = 0;
+  for(const carpeta of ['fotos','imagenes']){
+    try{
+      const r = await ghRequest('https://api.github.com/repos/' + repo + '/contents/' + carpeta + '?ref=main', token);
+      if(!r.ok) continue;
+      const items = await r.json();
+      items.forEach(it => {
+        if(it.type === 'file' && /\.(jpe?g|png|gif|webp)$/i.test(it.name)){
+          window.photoIndex[it.name] = it.download_url;
+          total++;
+        }
+      });
+    }catch(e){ /* se ignora, se conserva lo que ya había */ }
+  }
+  if(st){ st.className='ok'; st.textContent = total + ' imagen(es) detectadas en el repositorio (fotos/ + imagenes/).'; }
+  renderEditor();
+}
+try{
+  const t = localStorage.getItem('gh_token');
+  if(t){
+    document.getElementById('ghToken').value = t;
+    setTimeout(()=>{ if(document.getElementById('ghRepo').value.trim()) actualizarImagenesDesdeGitHub(); }, 300);
+  }
+}catch(e){}
 function olvidarToken(){
   try{ localStorage.removeItem('gh_token'); }catch(e){}
   document.getElementById('ghToken').value = '';
@@ -1942,7 +2143,12 @@ document.getElementById('imgInformeInput').addEventListener('change', function(e
 window.onWorkbookLoaded = function(wb){
   LOADED_WB = wb;
   const rows = sheetToRows(wb, 'Diapositivas');
-  if(rows && rows.length){ PAGES = parseDiapositivas(rows); DESIGN = PAGES.informe; }
+  if(rows && rows.length){
+    const parsed = parseDiapositivas(rows);
+    const tieneAlgo = parsed.informe.length || parsed.casos.some(c => c.secciones.length || c.nombre !== 'Caso ' + (parsed.casos.indexOf(c)+1));
+    if(tieneAlgo){ PAGES = parsed; DESIGN = PAGES.informe; }
+    else console.warn('La hoja Diapositivas no produjo secciones válidas; se conserva el diseño previo.');
+  }
   renderAll();
   renderEditor();
 };
