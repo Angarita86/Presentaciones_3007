@@ -11,8 +11,11 @@ de Reparación Colectiva (Unidad para las Víctimas · CISP).
 ├── data/
 │   └── informe.xlsx    → Datos del corte (tablas del informe + hoja Insumo_Sujetos para el mapa)
 ├── fotos/
-│   ├── manifest.json   → Índice de fotos por sujeto
+│   ├── manifest.json   → Índice de fotos por sujeto (Registro Fotográfico)
 │   └── *.jpeg          → Fotografías del registro
+├── imagenes/
+│   ├── manifest.json   → Índice de imágenes para las diapositivas del Informe
+│   └── *.jpg           → Imágenes de uso general (no aparecen en el Registro Fotográfico)
 ├── assets/
 │   ├── footer.png      → Cinta institucional (pie de página de cada sección)
 │   └── logo.png        → (Opcional) Logo personalizado

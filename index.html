@@ -320,6 +320,27 @@
   .ed-celda label{ font-size:10.5px; color:var(--muted); font-weight:700; display:block; margin-bottom:2px; text-transform:uppercase; }
   .ed-celda input, .ed-celda select, .ed-celda textarea{ width:100%; padding:6px 8px; border:1px solid var(--gray-line); border-radius:4px; font-size:12px; font-family:inherit; }
   .ed-celda .full{ grid-column:1 / -1; }
+
+  .logout-btn{ border:1px solid var(--gray-line); background:#fff; color:var(--red); font-weight:700;
+    border-radius:5px; padding:6px 12px; font-size:12px; cursor:pointer; font-family:inherit; }
+  .logout-btn:hover{ background:#FBEBED; }
+  /* ===== Colapsar secciones ===== */
+  .collapse-btn{ position:absolute; top:16px; right:16px; border:1px solid var(--gray-line); background:#fff;
+    border-radius:5px; width:30px; height:30px; font-size:14px; cursor:pointer; color:var(--navy); font-family:inherit; }
+  .collapse-btn:hover{ background:#EEF3FA; }
+  .slide.collapsed > *:not(.slide-eyebrow):not(h2):not(.collapse-btn){ display:none !important; }
+  /* ===== Boton PDF ===== */
+  .pdf-toolbar{ display:flex; justify-content:flex-end; margin-top:20px; }
+  .pdf-btn{ border:none; background:var(--navy); color:#fff; font-weight:700; border-radius:5px;
+    padding:8px 16px; font-size:12.5px; cursor:pointer; font-family:inherit; }
+  .pdf-btn:hover{ background:var(--navy-dark); }
+  @media print{
+    .topbar, .sidebar, .colorbar, .login-overlay, .pdf-toolbar, .collapse-btn, .tabbar{ display:none !important; }
+    .layout-main{ display:block; }
+    .content-area{ width:100%; }
+    body{ background:#fff; }
+    .slide{ break-inside:avoid; border:none; margin-top:14px; padding:20px; }
+  }
 </style>
 </head>
 <body>
@@ -348,7 +369,10 @@
       <div class="logo-box"><span>CISP</span></div>
     </div>
   </div>
-  <div class="corte-pill">Corte: <span class="fecha-corte-display">16 de junio de 2026</span></div>
+  <div style="display:flex; align-items:center; gap:10px;">
+    <div class="corte-pill">Corte: <span class="fecha-corte-display">16 de junio de 2026</span></div>
+    <button class="logout-btn" onclick="try{sessionStorage.removeItem('cisp_auth')}catch(e){}; location.reload();">Cerrar sesión</button>
+  </div>
 </div>
 <div class="colorbar"></div>
 
@@ -466,6 +490,9 @@
           <p>Esta fecha se muestra en la parte superior del informe y en la portada.</p>
           <label class="field-label" for="fechaCorteInput">Fecha de corte del informe</label>
           <input type="date" id="fechaCorteInput" value="2026-06-16">
+          <span style="font-size:11.5px; color:var(--muted); display:block; margin-top:8px;">
+          ⚠️ El cambio aplica solo a esta sesión. Para dejarlo permanente, descarga el <code>config.json</code>
+          (tarjeta "Guardar configuración") y súbelo al repositorio.</span>
         </div>
 
         <div class="config-card red">
@@ -481,9 +508,9 @@
 
         <div class="config-card gold">
           <h3>4 · Cargar registro fotográfico</h3>
-          <p>Selecciona varias imágenes o una carpeta completa. Se agrupan automáticamente por Sujeto usando el nombre del archivo
-          (por ejemplo <code>Flamenco_1.jpg</code>, <code>Flamenco_2.jpg</code> → grupo "Flamenco"). Los archivos nuevos reemplazan el registro actual
-          en la hoja "Registro Fotográfico".</p>
+          <p>⚠️ Solo para la galería de la hoja "Registro Fotográfico" — <b>reemplaza</b> las fotos actuales de esa galería.
+          Se agrupan por Sujeto según el nombre del archivo (<code>Flamenco_1.jpg</code> → grupo "Flamenco").
+          Permanente: carpeta <code>fotos/</code> + <code>fotos/manifest.json</code> del repositorio.</p>
           <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
             <label class="upload-btn" for="photoInputFiles">Seleccionar fotos</label>
             <input type="file" id="photoInputFiles" accept="image/*" multiple>
@@ -492,6 +519,18 @@
           </div>
           <span id="photoStatus" style="font-size:12.5px; color:var(--muted); margin-top:10px; display:block;">
             Sin fotos cargadas — se muestran las fotos de ejemplo del proyecto.
+          </span>
+        </div>
+
+        <div class="config-card">
+          <h3>4b · Imágenes del informe (diapositivas)</h3>
+          <p>Estas imágenes <b>no tocan el Registro Fotográfico</b>: quedan disponibles en el selector "Imagen"
+          del Diseño de hojas, para usarlas dentro de las diapositivas. Permanente: súbelas a la carpeta
+          <code>imagenes/</code> del repositorio y regístralas en <code>imagenes/manifest.json</code>.</p>
+          <label class="upload-btn" for="imgInformeInput">Seleccionar imágenes</label>
+          <input type="file" id="imgInformeInput" accept="image/*" multiple style="display:none;">
+          <span id="imgInformeStatus" style="font-size:12.5px; color:var(--muted); margin-top:10px; display:block;">
+            Sin imágenes de sesión — se listan las de la carpeta imagenes/ y fotos/ del repositorio.
           </span>
         </div>
 
@@ -535,6 +574,7 @@
 
   <!-- ===================== INFORME (todo el contenido en scroll continuo) ===================== -->
   <div class="page" id="page-informe">
+    <div class="pdf-toolbar"><button class="pdf-btn" onclick="window.print()">Descargar PDF de esta hoja</button></div>
 
   <!-- ===================== PORTADA ===================== -->
     <div class="slide cover">
@@ -684,6 +724,7 @@
 
   <!-- ===================== REGISTRO FOTOGRAFICO (hoja aparte) ===================== -->
   <div class="page" id="page-fotos">
+    <div class="pdf-toolbar"><button class="pdf-btn" onclick="window.print()">Descargar PDF de esta hoja</button></div>
     <div class="slide">
       <div class="slide-eyebrow">Registro fotográfico</div>
       <h2>Registro fotográfico</h2>
@@ -1144,7 +1185,7 @@ document.getElementById('lightbox').addEventListener('click', function(e){
 document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeLightbox(); });
 
 /* Carga inicial de fotos desde el repositorio (fotos/manifest.json) */
-fetch('fotos/manifest.json')
+fetch('fotos/manifest.json?v=' + Date.now(), {cache:'no-store'})
   .then(r => { if(!r.ok) throw new Error('manifest no encontrado'); return r.json(); })
   .then(manifest => {
     const groups = {};
@@ -1156,6 +1197,7 @@ fetch('fotos/manifest.json')
         imagenes: (g.archivos || []).map((f, i) => ({ num: i+1, data: 'fotos/' + f, nombre: f }))
       };
       (g.archivos || []).forEach(f => { if(window.photoIndex) window.photoIndex[f] = 'fotos/' + f; });
+      if(window.renderEditor) setTimeout(window.renderEditor, 50);
     });
     renderPhotoGallery(groups);
     const st = document.getElementById('photoStatus');
@@ -1226,7 +1268,7 @@ document.getElementById('photoInputFolder').addEventListener('change', e => load
    (por ejemplo al abrir el archivo localmente con doble clic), no pasa nada:
    se pueden cargar manualmente desde la hoja de Configuración. */
 
-fetch('config.json')
+fetch('config.json?v=' + Date.now(), {cache:'no-store'})
   .then(r => { if(!r.ok) throw new Error(); return r.json(); })
   .then(cfg => {
     if(cfg.fechaCorte){
@@ -1257,7 +1299,7 @@ fetch('config.json')
   })
   .catch(()=>{ /* sin config.json: se usan los valores por defecto */ });
 
-fetch('data/informe.xlsx')
+fetch('data/informe.xlsx?v=' + Date.now(), {cache:'no-store'})
   .then(r => { if(!r.ok) throw new Error(); return r.arrayBuffer(); })
   .then(buf => {
     const wb = XLSX.read(new Uint8Array(buf), {type:'array'});
@@ -1452,7 +1494,11 @@ function renderEditor(){
             + ['recortar','completa'].map(v => '<option' + (c.ajuste===v?' selected':'') + '>' + v + '</option>').join('') + '</select></div>'
             + '<div class="full"><label>Título</label><input data-f="titulo" data-k="' + k + '" value="' + (c.titulo||'').replace(/"/g,'&quot;') + '"></div>'
             + '<div class="full"><label>Detalle</label><textarea rows="2" data-f="detalle" data-k="' + k + '">' + (c.detalle||'') + '</textarea></div>'
-            + '<div class="full"><label>Imagen (nombre de archivo en fotos/, ej: Flamenco_1.jpeg)</label><input data-f="imagen" data-k="' + k + '" value="' + (c.imagen||'').replace(/"/g,'&quot;') + '"></div>'
+            + '<div class="full"><label>Imagen (disponibles en fotos/ e imagenes/)</label><select data-f="imagen" data-k="' + k + '">'
+            + '<option value="">(sin imagen)</option>'
+            + Object.keys(window.photoIndex).sort().map(n => '<option value="' + n + '"' + (c.imagen===n?' selected':'') + '>' + n + '</option>').join('')
+            + ((c.imagen && !(c.imagen in window.photoIndex)) ? '<option selected>' + c.imagen + '</option>' : '')
+            + '</select></div>'
             + '</div>';
         });
         body += '</div>';
@@ -1488,10 +1534,14 @@ function renderEditor(){
     celdas.length = n;
     renderEditor();
   }));
-  box.querySelectorAll('[data-f]').forEach(el => el.addEventListener('input', e => {
-    const [si,bi,ci] = e.target.dataset.k.split('-').map(Number);
-    DESIGN[si].bloques[bi].celdas[ci][e.target.dataset.f] = e.target.value;
-  }));
+  box.querySelectorAll('[data-f]').forEach(el => {
+    const fn = e => {
+      const [si,bi,ci] = e.target.dataset.k.split('-').map(Number);
+      DESIGN[si].bloques[bi].celdas[ci][e.target.dataset.f] = e.target.value;
+    };
+    el.addEventListener('input', fn);
+    el.addEventListener('change', fn);
+  });
 }
 
 /* ============ EXPORTAR EXCEL ACTUALIZADO ============ */
@@ -1524,6 +1574,52 @@ window.onWorkbookLoaded = function(wb){
   renderDesign();
   renderEditor();
 };
+
+/* ===== Colapsar/expandir secciones del informe ===== */
+function ensureCollapseButtons(){
+  document.querySelectorAll('#page-informe .slide').forEach(s => {
+    if(s.id === 'slide-gracias' || !s.querySelector('h2') || s.querySelector('.collapse-btn')) return;
+    const b = document.createElement('button');
+    b.className = 'collapse-btn'; b.textContent = '▾'; b.title = 'Contraer / expandir sección';
+    b.addEventListener('click', () => {
+      s.classList.toggle('collapsed');
+      b.textContent = s.classList.contains('collapsed') ? '▸' : '▾';
+    });
+    s.appendChild(b);
+  });
+}
+const _renderDesignBase = renderDesign;
+renderDesign = function(){ _renderDesignBase(); ensureCollapseButtons(); };
+
+/* ===== Imagenes del informe: carpeta imagenes/ del repositorio ===== */
+fetch('imagenes/manifest.json?v=' + Date.now(), {cache:'no-store'})
+  .then(r => { if(!r.ok) throw 0; return r.json(); })
+  .then(m => {
+    (m.archivos || []).forEach(f => { window.photoIndex[f] = 'imagenes/' + f; });
+    renderEditor();
+  })
+  .catch(()=>{});
+
+/* ===== Imagenes del informe: carga en sesion (tarjeta 4b) ===== */
+document.getElementById('imgInformeInput').addEventListener('change', function(e){
+  const files = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
+  if(!files.length) return;
+  let done = 0;
+  files.forEach(f => {
+    const r = new FileReader();
+    r.onload = ev => {
+      window.photoIndex[f.name] = ev.target.result;
+      done++;
+      if(done === files.length){
+        document.getElementById('imgInformeStatus').textContent =
+          'Agregadas ' + files.length + ' imagen(es) al selector del editor (solo esta sesión; súbelas a imagenes/ del repositorio para que sean permanentes).';
+        document.getElementById('imgInformeStatus').className = 'ok';
+        renderEditor();
+      }
+    };
+    r.readAsDataURL(f);
+  });
+});
 
 /* estado inicial (sin Excel): diseño por defecto */
 renderDesign();
