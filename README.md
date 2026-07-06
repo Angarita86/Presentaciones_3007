@@ -96,6 +96,32 @@ config.json sin descargar archivos. Requiere un token de GitHub:
 > El informe lo recuerda en el equipo donde se pegó (queda en el navegador hasta usar el botón
 > "Olvidar token" o hasta que expire). En computadores compartidos, usar "Olvidar token" al terminar.
 
+## Copias de seguridad y cómo revertir un error
+
+Con la casilla "Crear copia de seguridad" activada (por defecto), cada guardado desde la app copia
+automáticamente el Excel anterior a `backups/informe_AAAA-MM-DD_HHMM.xlsx` **antes** de sobrescribirlo.
+Para revertir: descarga la copia que necesites desde esa carpeta en GitHub y súbela reemplazando
+`data/informe.xlsx`.
+
+Independientemente de esa casilla, todo el repositorio tiene el historial completo de Git: en la página
+de cualquier archivo en GitHub hay un botón **"History"** con todas las versiones anteriores, cada una
+descargable.
+
+## Hojas nuevas de datos (tablas genéricas)
+
+Puedes agregar cualquier hoja de datos nueva al Excel (por ejemplo `Indicadores_2026`) y mostrarla como
+tabla en el Informe o en un Caso: agrega una fila en `Diapositivas` con `Tipo=tabla` y `Fuente` igual al
+**nombre exacto** de la nueva hoja. Se muestra automáticamente con sus columnas y filas tal cual estén en
+Excel (no requiere que el HTML tenga una tabla preconstruida para ese caso).
+
+## Las imágenes no aparecen
+
+Si subiste fotos a `fotos/` o `imagenes/` directamente en GitHub y no aparecen en la galería o el selector
+del editor, seguramente falta agregarlas al `manifest.json` correspondiente. La forma más confiable de
+evitar ese paso manual es usar **Configuración → 8 · Imágenes disponibles en el repositorio → "Actualizar
+lista de imágenes desde GitHub"** (con el token puesto): detecta automáticamente todas las imágenes reales
+de esas carpetas sin depender de los manifest.json.
+
 ## Probar en el computador antes de subir
 
 El informe lee archivos externos, así que abrirlo con doble clic no carga los datos
