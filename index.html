@@ -527,7 +527,15 @@
       </div>
 
       <div class="help-box" style="margin-bottom:18px;">
-        <b>10. Las imágenes no aparecen</b>
+        <b>10. Eliminar tablas o secciones</b>
+        <p style="margin:8px 0 0;">El botón "Eliminar" del editor ya no es exclusivo de las secciones de bloques:
+        también funciona sobre las tablas (fijas o de hojas nuevas del Excel). Al eliminar una tabla, desaparece
+        de la vista del Informe/Caso y, al descargar o guardar el Excel actualizado, esa hoja ya no aparecerá
+        referenciada en <code>Diapositivas</code> — el cambio queda reflejado en ambos lados.</p>
+      </div>
+
+      <div class="help-box" style="margin-bottom:18px;">
+        <b>11. Las imágenes no aparecen</b>
         <p style="margin:8px 0 0;">Si subiste fotos a <code>fotos/</code> o <code>imagenes/</code> directamente en GitHub
         y no las ves en la galería o en el selector del editor, lo más probable es que falte agregarlas al
         <code>manifest.json</code> correspondiente. La forma más confiable de evitar este paso manual es usar
@@ -1832,7 +1840,7 @@ function renderEditor(){
       + '<span class="ed-tipo">' + tipoLabel + '</span>'
       + '<input type="text" value="' + (sec.titulo||'').replace(/"/g,'&quot;') + '"' + (sec.tipo!=='bloques' ? ' disabled' : '') + '>'
       + '<button class="ed-btn">▲</button><button class="ed-btn">▼</button>'
-      + (sec.tipo === 'bloques' ? '<button class="ed-btn danger">Eliminar</button>' : '');
+      + ((sec.tipo === 'bloques' || sec.tipo === 'tabla') ? '<button class="ed-btn danger">Eliminar</button>' : '');
     card.appendChild(head);
     const hb = head.querySelectorAll('button, input');
     const expB = head.querySelector('.exp');
@@ -1842,7 +1850,12 @@ function renderEditor(){
     const btns = head.querySelectorAll('button.ed-btn:not(.exp)');
     btns[0].addEventListener('click', () => { if(si>0){ [secs[si-1],secs[si]]=[secs[si],secs[si-1]]; renderEditor(); } });
     btns[1].addEventListener('click', () => { if(si<secs.length-1){ [secs[si+1],secs[si]]=[secs[si],secs[si+1]]; renderEditor(); } });
-    if(btns[2]) btns[2].addEventListener('click', () => { if(confirm('¿Eliminar esta sección?')){ secs.splice(si,1); renderEditor(); } });
+    if(btns[2]) btns[2].addEventListener('click', () => {
+      const msg = sec.tipo === 'tabla'
+        ? '¿Eliminar esta tabla del diseño? Ya no aparecerá en el Informe/Caso ni en el próximo Excel que descargues o guardes.'
+        : '¿Eliminar esta sección?';
+      if(confirm(msg)){ secs.splice(si,1); renderEditor(); renderAll(); }
+    });
 
     if(sec.tipo === 'bloques'){
       const body = document.createElement('div');
