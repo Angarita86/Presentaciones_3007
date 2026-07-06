@@ -370,6 +370,40 @@
   .cf-etiqueta{ font-size:13px; color:var(--muted); margin-top:30px; }
   .cf-convenio{ font-size:20px; font-weight:800; color:var(--navy); margin-top:4px; }
   .cf-normal{ font-size:14px; color:#333; margin-top:8px; }
+
+  /* ===== Modo presentacion (pantalla completa, avance horizontal) ===== */
+  .pres-btn{ background:var(--gold); color:#3a2c00; }
+  .pres-btn:hover{ background:#d9a600; }
+  #presOverlay{
+    display:none; position:fixed; inset:0; background:#fff; z-index:2000; overflow:hidden;
+  }
+  #presOverlay.active{ display:block; }
+  #presTrack{ height:100%; display:flex; transition:transform .35s ease; will-change:transform; }
+  .pres-slide-wrap{
+    min-width:100vw; max-width:100vw; height:100%; box-sizing:border-box;
+    overflow-y:auto; display:flex; align-items:center; justify-content:center; padding:50px 70px;
+  }
+  .pres-slide-wrap .slide{ width:100%; max-width:1000px; border:none; box-shadow:0 4px 30px rgba(0,0,0,.08); margin:0; }
+  .pres-slide-wrap .collapse-btn{ display:none; }
+  .pres-nav{
+    position:fixed; bottom:26px; left:50%; transform:translateX(-50%); z-index:2010;
+    display:flex; gap:16px; align-items:center; background:rgba(19,35,63,.85);
+    padding:10px 20px; border-radius:30px; backdrop-filter:blur(2px);
+  }
+  .pres-nav button{
+    background:none; border:none; color:#fff; font-size:20px; cursor:pointer; line-height:1;
+    width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  }
+  .pres-nav button:hover{ background:rgba(255,255,255,.15); }
+  .pres-nav button:disabled{ opacity:.3; cursor:default; }
+  .pres-counter{ color:#fff; font-size:13px; font-weight:600; min-width:52px; text-align:center; }
+  .pres-exit{
+    position:fixed; top:22px; right:26px; z-index:2010; background:rgba(19,35,63,.85); color:#fff;
+    border:none; border-radius:20px; padding:9px 18px; cursor:pointer; font-size:13px; font-weight:700;
+  }
+  .pres-exit:hover{ background:rgba(19,35,63,1); }
+  .pres-clickzone{ position:absolute; top:0; bottom:0; width:35%; z-index:2005; cursor:pointer; }
+  .pres-clickzone.left{ left:0; } .pres-clickzone.right{ right:0; }
 </style>
 </head>
 <body>
@@ -553,7 +587,21 @@
       </div>
 
       <div class="help-box" style="margin-bottom:18px;">
-        <b>13. Las imágenes no aparecen</b>
+        <b>13. Modo presentación (pantalla completa, avance horizontal)</b>
+        <p style="margin:8px 0 0;">En el Informe y en cada Caso Emblemático hay un botón <b>"▶ Presentar"</b> junto al
+        de descargar PDF. Convierte las diapositivas en un carrusel de pantalla completa, tipo PowerPoint:</p>
+        <ul>
+          <li>Avanza con las flechas <b>← →</b> del teclado, la barra espaciadora, o los botones ‹ › de abajo.</li>
+          <li>También puedes hacer clic en el lado derecho de la pantalla para avanzar y en el izquierdo para retroceder.</li>
+          <li><b>Inicio</b>/<b>Fin</b> del teclado saltan a la primera/última diapositiva.</li>
+          <li><b>Esc</b> o el botón "✕ Salir" cierran la presentación y regresan a la vista normal.</li>
+        </ul>
+        <p style="margin:8px 0 0;">Solo se incluyen las secciones <b>activas</b> en ese momento — lo que desactives en
+        Diseño de hojas no aparece en la presentación.</p>
+      </div>
+
+      <div class="help-box" style="margin-bottom:18px;">
+        <b>14. Las imágenes no aparecen</b>
         <p style="margin:8px 0 0;">Si subiste fotos a <code>fotos/</code> o <code>imagenes/</code> directamente en GitHub
         y no las ves en la galería o en el selector del editor, lo más probable es que falte agregarlas al
         <code>manifest.json</code> correspondiente. La forma más confiable de evitar este paso manual es usar
@@ -710,7 +758,7 @@
 
   <!-- ===================== INFORME (todo el contenido en scroll continuo) ===================== -->
   <div class="page" id="page-informe">
-    <div class="pdf-toolbar"><button class="pdf-btn" onclick="window.print()">Descargar PDF de esta hoja</button></div>
+    <div class="pdf-toolbar"><button class="pdf-btn pres-btn" onclick="startPresentation('informe')">▶ Presentar</button><button class="pdf-btn" onclick="window.print()">Descargar PDF de esta hoja</button></div>
 
   <!-- ===================== PORTADA ===================== -->
     <div class="slide cover">
@@ -867,11 +915,11 @@
   </div>
 
   <!-- ===================== CASOS EMBLEMATICOS ===================== -->
-  <div class="page page-caso" id="page-caso1"><div class="pdf-toolbar"><button class="pdf-btn" onclick="window.print()">Descargar PDF de esta hoja</button></div></div>
-  <div class="page page-caso" id="page-caso2"><div class="pdf-toolbar"><button class="pdf-btn" onclick="window.print()">Descargar PDF de esta hoja</button></div></div>
-  <div class="page page-caso" id="page-caso3"><div class="pdf-toolbar"><button class="pdf-btn" onclick="window.print()">Descargar PDF de esta hoja</button></div></div>
-  <div class="page page-caso" id="page-caso4"><div class="pdf-toolbar"><button class="pdf-btn" onclick="window.print()">Descargar PDF de esta hoja</button></div></div>
-  <div class="page page-caso" id="page-caso5"><div class="pdf-toolbar"><button class="pdf-btn" onclick="window.print()">Descargar PDF de esta hoja</button></div></div>
+  <div class="page page-caso" id="page-caso1"><div class="pdf-toolbar"><button class="pdf-btn pres-btn" onclick="startPresentation('caso1')">▶ Presentar</button><button class="pdf-btn" onclick="window.print()">Descargar PDF de esta hoja</button></div></div>
+  <div class="page page-caso" id="page-caso2"><div class="pdf-toolbar"><button class="pdf-btn pres-btn" onclick="startPresentation('caso2')">▶ Presentar</button><button class="pdf-btn" onclick="window.print()">Descargar PDF de esta hoja</button></div></div>
+  <div class="page page-caso" id="page-caso3"><div class="pdf-toolbar"><button class="pdf-btn pres-btn" onclick="startPresentation('caso3')">▶ Presentar</button><button class="pdf-btn" onclick="window.print()">Descargar PDF de esta hoja</button></div></div>
+  <div class="page page-caso" id="page-caso4"><div class="pdf-toolbar"><button class="pdf-btn pres-btn" onclick="startPresentation('caso4')">▶ Presentar</button><button class="pdf-btn" onclick="window.print()">Descargar PDF de esta hoja</button></div></div>
+  <div class="page page-caso" id="page-caso5"><div class="pdf-toolbar"><button class="pdf-btn pres-btn" onclick="startPresentation('caso5')">▶ Presentar</button><button class="pdf-btn" onclick="window.print()">Descargar PDF de esta hoja</button></div></div>
 
 </div>
 <!-- fin .deck -->
@@ -879,6 +927,18 @@
 <!-- fin .content-area -->
 </div>
 <!-- fin .layout-main -->
+
+<div id="presOverlay">
+  <div class="pres-clickzone left" onclick="presPrev()"></div>
+  <div class="pres-clickzone right" onclick="presNext()"></div>
+  <div id="presTrack"></div>
+  <button class="pres-exit" onclick="exitPresentation()">✕ Salir (Esc)</button>
+  <div class="pres-nav">
+    <button id="presBtnPrev" onclick="presPrev()">‹</button>
+    <span class="pres-counter" id="presCounter">1 / 1</span>
+    <button id="presBtnNext" onclick="presNext()">›</button>
+  </div>
+</div>
 
 <div class="lightbox" id="lightbox">
   <span class="lightbox-close" id="lightboxClose">&times;</span>
@@ -1288,6 +1348,80 @@ renderAcompanamiento(SAMPLE.Acompanamiento_Documentacion);
 renderRehabilitacion(SAMPLE.Acciones_Rehabilitacion);
 renderContactabilidad(SAMPLE.Seguimiento_Contactabilidad);
 drawMap(SAMPLE_DEPT_DATA);
+</script>
+
+<script>
+/* ============ MODO PRESENTACION (pantalla completa, avance horizontal) ============ */
+let PRES_SLIDES = [];
+let PRES_INDEX = 0;
+let PRES_SOURCE = null;
+
+function startPresentation(pageId){
+  const page = document.getElementById('page-' + pageId);
+  if(!page) return;
+  const slides = Array.from(page.querySelectorAll(':scope > .slide')).filter(s => getComputedStyle(s).display !== 'none');
+  if(!slides.length){ alert('No hay diapositivas activas para presentar en esta hoja.'); return; }
+
+  PRES_SOURCE = pageId;
+  PRES_SLIDES = slides;
+  PRES_INDEX = 0;
+
+  const track = document.getElementById('presTrack');
+  track.innerHTML = '';
+  track.style.width = (slides.length * 100) + 'vw';
+  slides.forEach(s => {
+    const wrap = document.createElement('div');
+    wrap.className = 'pres-slide-wrap';
+    wrap.appendChild(s); /* mueve el nodo real; se restaura al salir con renderAll() */
+    track.appendChild(wrap);
+  });
+
+  const overlay = document.getElementById('presOverlay');
+  overlay.classList.add('active');
+  updatePresView();
+
+  const reqFs = overlay.requestFullscreen || overlay.webkitRequestFullscreen;
+  if(reqFs) reqFs.call(overlay).catch(()=>{ /* algunos navegadores requieren interaccion directa; el modo sigue funcionando sin fullscreen nativo */ });
+
+  document.addEventListener('keydown', presKeyHandler);
+}
+
+function updatePresView(){
+  const track = document.getElementById('presTrack');
+  track.style.transform = 'translateX(-' + (PRES_INDEX * 100) + 'vw)';
+  document.getElementById('presCounter').textContent = (PRES_INDEX+1) + ' / ' + PRES_SLIDES.length;
+  document.getElementById('presBtnPrev').disabled = PRES_INDEX === 0;
+  document.getElementById('presBtnNext').disabled = PRES_INDEX === PRES_SLIDES.length - 1;
+}
+function presNext(){ if(PRES_INDEX < PRES_SLIDES.length - 1){ PRES_INDEX++; updatePresView(); } }
+function presPrev(){ if(PRES_INDEX > 0){ PRES_INDEX--; updatePresView(); } }
+function presKeyHandler(e){
+  if(e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' '){ e.preventDefault(); presNext(); }
+  else if(e.key === 'ArrowLeft' || e.key === 'PageUp'){ e.preventDefault(); presPrev(); }
+  else if(e.key === 'Home'){ PRES_INDEX = 0; updatePresView(); }
+  else if(e.key === 'End'){ PRES_INDEX = PRES_SLIDES.length - 1; updatePresView(); }
+  else if(e.key === 'Escape'){ exitPresentation(); }
+}
+function exitPresentation(){
+  document.removeEventListener('keydown', presKeyHandler);
+  document.getElementById('presOverlay').classList.remove('active');
+  if(document.fullscreenElement || document.webkitFullscreenElement){
+    (document.exitFullscreen || document.webkitExitFullscreen).call(document).catch(()=>{});
+  }
+  /* Devuelve cada diapositiva real a su página de origen, en su orden original,
+     ANTES de reconstruir — así el "ancla" (ej. la diapositiva Gracias) sigue
+     siendo un hijo válido y renderAll() puede reubicar todo correctamente. */
+  if(PRES_SOURCE){
+    const page = document.getElementById('page-' + PRES_SOURCE);
+    if(page) PRES_SLIDES.forEach(s => page.appendChild(s));
+  }
+  document.getElementById('presTrack').innerHTML = '';
+  renderAll();
+  PRES_SLIDES = []; PRES_SOURCE = null;
+}
+document.addEventListener('fullscreenchange', () => {
+  if(!document.fullscreenElement && document.getElementById('presOverlay').classList.contains('active')) exitPresentation();
+});
 </script>
 
 <script>
