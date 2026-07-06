@@ -544,7 +544,16 @@
       </div>
 
       <div class="help-box" style="margin-bottom:18px;">
-        <b>12. Las imágenes no aparecen</b>
+        <b>12. Corte de julio 2026</b>
+        <p style="margin:8px 0 0;">Este corte incorporó la hoja de datos <code>Acciones_suspendidas</code> (nueva
+        sección "Acciones Suspendidas" en el Informe) y el <b>Caso Emblemático "Kankuruas — Resguardo Indígena
+        Kankuamo"</b>, construido a partir del primer informe de avance de construcción de Kankuruas del Resguardo
+        Indígena Kankuamo. La hoja de datos <code>Sujetos_a_implementar</code> quedó disponible en el Excel para uso
+        futuro (no está referenciada en ninguna sección todavía).</p>
+      </div>
+
+      <div class="help-box" style="margin-bottom:18px;">
+        <b>13. Las imágenes no aparecen</b>
         <p style="margin:8px 0 0;">Si subiste fotos a <code>fotos/</code> o <code>imagenes/</code> directamente en GitHub
         y no las ves en la galería o en el selector del editor, lo más probable es que falte agregarlas al
         <code>manifest.json</code> correspondiente. La forma más confiable de evitar este paso manual es usar
@@ -1629,6 +1638,8 @@ function buildSectionElement(sec, idx){
         el.style.display = sec.activa ? '' : 'none';
         const eb = el.querySelector('.slide-eyebrow');
         if(eb) eb.textContent = 'Sección ' + idx;
+        const h2 = el.querySelector('h2');
+        if(h2 && sec.titulo) h2.textContent = sec.titulo;
         return el;
       }
     }
@@ -1695,6 +1706,8 @@ function renderDesign(){
       el.style.display = sec.activa ? '' : 'none';
       const eb = el.querySelector('.slide-eyebrow');
       if(eb) eb.textContent = 'Sección ' + idx;
+      const h2m = el.querySelector('h2');
+      if(h2m && sec.titulo) h2m.textContent = sec.titulo;
       page.insertBefore(el, gracias);
       return;
     }
