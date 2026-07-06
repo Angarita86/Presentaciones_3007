@@ -341,6 +341,34 @@
     body{ background:#fff; }
     .slide{ break-inside:avoid; border:none; margin-top:14px; padding:20px; }
   }
+
+  /* ===== Editor amigable ===== */
+  .hoja-bar{ display:flex; gap:6px; flex-wrap:wrap; }
+  .hoja-bar button{ border:1px solid var(--gray-line); background:#fff; border-radius:16px; padding:7px 14px;
+    font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; color:#555; }
+  .hoja-bar button.sel{ background:var(--navy); color:#fff; border-color:var(--navy); }
+  .hoja-bar button.inactiva{ color:#bbb; }
+  .ed-section .ed-body{ display:none; }
+  .ed-section.open .ed-body{ display:block; }
+  .swatches{ display:flex; gap:6px; align-items:center; padding-top:4px; }
+  .swatch{ width:22px; height:22px; border-radius:50%; border:2px solid #fff; outline:1px solid var(--gray-line); cursor:pointer; }
+  .swatch.sel{ outline:3px solid var(--navy); }
+  .sw-blanco{ background:#fff; } .sw-azul{ background:var(--navy); } .sw-dorado{ background:#F2B705; }
+  .sw-rojo{ background:#C8102E; } .sw-gris{ background:#C9CFD8; }
+  .img-pick{ display:flex; gap:8px; align-items:center; }
+  .img-pick select{ flex:1; }
+  .img-pick img{ height:34px; width:50px; object-fit:cover; border:1px solid var(--gray-line); border-radius:4px; }
+  .caso-head{ display:flex; gap:12px; align-items:center; margin:0 0 14px; flex-wrap:wrap;
+    background:#F6F8FB; border:1px solid var(--gray-line); border-radius:8px; padding:12px 14px; }
+  .caso-head input[type=text]{ flex:1; min-width:200px; padding:8px 10px; border:1px solid var(--gray-line); border-radius:5px; font-size:13px; font-family:inherit; }
+  .caso-head label{ font-size:12.5px; font-weight:700; color:var(--navy); }
+  /* ===== Campos de portada ===== */
+  .cf-eyebrow{ font-size:11.5px; letter-spacing:1.5px; color:var(--muted); text-transform:uppercase; margin-bottom:6px; }
+  .cf-titulo{ font-size:44px; font-weight:800; color:var(--navy); margin:6px 0; }
+  .cf-subtitulo{ font-size:17px; color:#444; margin:4px 0 10px; }
+  .cf-etiqueta{ font-size:13px; color:var(--muted); margin-top:30px; }
+  .cf-convenio{ font-size:20px; font-weight:800; color:var(--navy); margin-top:4px; }
+  .cf-normal{ font-size:14px; color:#333; margin-top:8px; }
 </style>
 </head>
 <body>
@@ -388,6 +416,16 @@
     <button class="nav-sub" data-page="diseno">Diseño de hojas</button>
   </div>
   <button class="nav-item" data-page="informe">Informe</button>
+  <button class="nav-item" id="btnCasosParent">
+    Casos Emblemáticos <span class="caret" id="casosCaret">▶</span>
+  </button>
+  <div class="submenu" id="casosSubmenu">
+    <button class="nav-sub" data-page="caso1">Caso 1</button>
+    <button class="nav-sub" data-page="caso2">Caso 2</button>
+    <button class="nav-sub" data-page="caso3">Caso 3</button>
+    <button class="nav-sub" data-page="caso4">Caso 4</button>
+    <button class="nav-sub" data-page="caso5">Caso 5</button>
+  </div>
   <button class="nav-item" data-page="fotos">Registro Fotográfico</button>
 </div>
 
@@ -459,8 +497,25 @@
         <code>fotos/</code>.</p>
       </div>
 
+      <div class="help-box" style="margin-bottom:18px;">
+        <b>7. Casos Emblemáticos y Portada editable</b>
+        <p style="margin:8px 0 0;">El menú incluye la pestaña <b>Casos Emblemáticos</b> con hasta 5 hojas (Caso 1 a Caso 5),
+        que se activan, renombran y arman solo con secciones de bloques desde <b>Diseño de hojas</b> (barra superior:
+        Portada · Informe · Casos). La <b>Portada</b> también es editable ahí: cada campo de texto tiene estilo
+        (eyebrow, título, subtítulo, etiqueta, convenio o normal), se puede ocultar, reordenar o agregar campos nuevos.
+        Todo se guarda en la hoja <code>Diapositivas</code> del Excel (columna <code>Hoja</code>).</p>
+      </div>
+
+      <div class="help-box" style="margin-bottom:18px;">
+        <b>8. Guardar directo en GitHub (sin descargar archivos)</b>
+        <p style="margin:8px 0 0;">En <b>Configuración → 7 · Guardar directo en el repositorio</b> puedes pegar un token
+        de GitHub (Fine-grained, solo este repositorio, permiso Contents: Read and write) y publicar el Excel de diseño
+        y la configuración con un clic. Los cambios quedan visibles para todos en ~1 minuto. Sin token, sigue disponible
+        el flujo manual: Descargar Excel / config.json y subirlos al repositorio.</p>
+      </div>
+
       <div class="help-box">
-        <b>7. Importante al compartir</b>
+        <b>9. Importante al compartir</b>
         <p style="margin:8px 0 0;">Los cambios hechos en el navegador (Excel cargado, fotos, logo, fecha) <b>no se guardan dentro del
         archivo HTML</b>: viven solo en la sesión abierta. Para presentar, abre el archivo y carga los insumos al inicio de la reunión;
         o comparte el HTML junto con el Excel del corte para que cada persona los cargue. Si se requiere dejar una versión "congelada"
@@ -551,6 +606,24 @@
           el <code>config.json</code> existente. Si cargaste un logo, guárdalo también como <code>assets/logo.png</code>.</p>
           <button class="upload-btn" style="border:none; font-family:inherit;" onclick="exportarConfig()">Descargar config.json</button>
         </div>
+
+        <div class="config-card red">
+          <h3>7 · Guardar directo en el repositorio (GitHub)</h3>
+          <p>Con un token de GitHub publicas los cambios (diseño + configuración) <b>sin descargar ni subir archivos</b>.
+          Crea el token en GitHub → Settings → Developer settings → <b>Fine-grained tokens</b>, con acceso <b>solo a este
+          repositorio</b> y permiso <b>Contents: Read and write</b>. El token se recuerda <b>en este equipo</b>
+          (queda guardado en el navegador hasta que uses "Olvidar token" o expire). En computadores compartidos,
+          usa "Olvidar token" al terminar.</p>
+          <label class="field-label">Repositorio (usuario/nombre)</label>
+          <input type="text" id="ghRepo" value="Angarita86/Presentaciones_3007" style="margin-bottom:10px;">
+          <label class="field-label">Token de acceso</label>
+          <input type="password" id="ghToken" placeholder="github_pat_..." style="margin-bottom:12px;">
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="upload-btn" style="border:none; font-family:inherit;" onclick="guardarEnGitHub()">Guardar Excel y config en el repositorio</button>
+            <button class="ed-btn danger" style="font-family:inherit;" onclick="olvidarToken()">Olvidar token</button>
+          </div>
+          <span id="ghStatus" style="font-size:12.5px; color:var(--muted); margin-top:10px; display:block;"></span>
+        </div>
       </div>
     </div>
   </div>
@@ -563,11 +636,13 @@
       <p class="subtitle">Define el orden, la visibilidad y el contenido de cada sección. El diseño vive en la hoja
       <code>Diapositivas</code> del Excel: al terminar, descarga el Excel actualizado y súbelo al repositorio.</p>
 
+      <div class="hoja-bar" id="edHojaBar" style="margin-bottom:14px;"></div>
       <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px;">
-        <button class="upload-btn" style="border:none; font-family:inherit;" onclick="agregarSeccionBloques()">+ Agregar sección de bloques</button>
-        <button class="upload-btn" style="border:none; font-family:inherit; background:var(--gold); color:#3a2c00;" onclick="renderDesign(); alert('Cambios aplicados a la vista del Informe.');">Aplicar cambios al Informe</button>
+        <button class="upload-btn" style="border:none; font-family:inherit;" onclick="agregarElemento()" id="btnAgregarElem">+ Agregar sección de bloques</button>
+        <button class="upload-btn" style="border:none; font-family:inherit; background:var(--gold); color:#3a2c00;" onclick="renderAll(); alert('Cambios aplicados a la vista.');">Aplicar cambios</button>
         <button class="upload-btn" style="border:none; font-family:inherit; background:var(--red);" onclick="descargarExcelActualizado()">Descargar Excel actualizado</button>
       </div>
+      <div id="edCasoHead"></div>
       <div id="designEditor"></div>
     </div>
   </div>
@@ -579,11 +654,7 @@
   <!-- ===================== PORTADA ===================== -->
     <div class="slide cover">
       <img id="customLogoCover" class="custom-logo-cover" alt="logo">
-      <div class="slide-eyebrow">Convenio 3007 de 2025</div>
-      <h1 style="font-size:44px;">Informe de <b>Seguimiento</b></h1>
-      <p class="subtitle" style="font-size:17px;">Análisis de Ejecución y Contactabilidad</p>
-      <div class="conv-tag">Implementación de Planes Integrales de Reparación Colectiva</div>
-      <div class="conv-title">Convenio <span class="n3007">3007</span> de 2025</div>
+      <div id="coverFields"></div>
       <div class="source-note">Corte: <span class="fecha-corte-display">16 de junio de 2026</span></div>
     </div>
 
@@ -734,6 +805,13 @@
     </div>
   </div>
 
+  <!-- ===================== CASOS EMBLEMATICOS ===================== -->
+  <div class="page page-caso" id="page-caso1"><div class="pdf-toolbar"><button class="pdf-btn" onclick="window.print()">Descargar PDF de esta hoja</button></div></div>
+  <div class="page page-caso" id="page-caso2"><div class="pdf-toolbar"><button class="pdf-btn" onclick="window.print()">Descargar PDF de esta hoja</button></div></div>
+  <div class="page page-caso" id="page-caso3"><div class="pdf-toolbar"><button class="pdf-btn" onclick="window.print()">Descargar PDF de esta hoja</button></div></div>
+  <div class="page page-caso" id="page-caso4"><div class="pdf-toolbar"><button class="pdf-btn" onclick="window.print()">Descargar PDF de esta hoja</button></div></div>
+  <div class="page page-caso" id="page-caso5"><div class="pdf-toolbar"><button class="pdf-btn" onclick="window.print()">Descargar PDF de esta hoja</button></div></div>
+
 </div>
 <!-- fin .deck -->
 </div>
@@ -768,25 +846,32 @@ function navigateTo(pageId){
   if(btn) btn.classList.add('active');
   const pg = document.getElementById('page-'+pageId);
   if(pg) pg.classList.add('active');
-  // Si se navega a una sub-página de Configuración, mantener el submenú abierto y resaltar el padre
-  const isConfigSub = btn && btn.classList.contains('nav-sub');
-  document.getElementById('btnConfigParent').classList.toggle('active', !!isConfigSub);
-  if(isConfigSub){
+  const inConfig = btn && btn.closest('#configSubmenu');
+  const inCasos = btn && btn.closest('#casosSubmenu');
+  document.getElementById('btnConfigParent').classList.toggle('active', !!inConfig);
+  document.getElementById('btnCasosParent').classList.toggle('active', !!inCasos);
+  if(inConfig){
     document.getElementById('configSubmenu').classList.add('open');
     document.getElementById('configCaret').classList.add('open');
+  }
+  if(inCasos){
+    document.getElementById('casosSubmenu').classList.add('open');
+    document.getElementById('casosCaret').classList.add('open');
   }
 }
 document.querySelectorAll('.sidebar button[data-page]').forEach(btn=>{
   btn.addEventListener('click', ()=> navigateTo(btn.dataset.page));
 });
-/* Toggle del submenú de Configuración */
+/* Toggles de submenus */
 document.getElementById('btnConfigParent').addEventListener('click', ()=>{
-  const sub = document.getElementById('configSubmenu');
-  const caret = document.getElementById('configCaret');
-  sub.classList.toggle('open');
-  caret.classList.toggle('open');
+  document.getElementById('configSubmenu').classList.toggle('open');
+  document.getElementById('configCaret').classList.toggle('open');
 });
-/* Estado inicial: submenú abierto, sub-item Configuración activo, padre resaltado */
+document.getElementById('btnCasosParent').addEventListener('click', ()=>{
+  document.getElementById('casosSubmenu').classList.toggle('open');
+  document.getElementById('casosCaret').classList.toggle('open');
+});
+/* Estado inicial */
 document.getElementById('configCaret').classList.add('open');
 document.getElementById('btnConfigParent').classList.add('active');
 
@@ -1335,10 +1420,11 @@ function exportarConfig(){
 
 
 <script>
-/* ============ MOTOR DE DISEÑO: hoja Diapositivas del Excel ============ */
+/* ============ MOTOR DE DISEÑO: hoja Diapositivas del Excel (modelo por hojas) ============ */
 window.photoIndex = window.photoIndex || {};
 let LOADED_WB = null;
 const FONDOS = ['blanco','azul','dorado','rojo','gris'];
+const ESTILOS_PORTADA = ['eyebrow','titulo','subtitulo','etiqueta','convenio','normal'];
 const FIXED_ID = s => s.tipo==='mapa' ? 'slide-mapa'
   : s.tipo==='contactabilidad' ? 'slide-contactabilidad'
   : ({'Maquinaria_Amarilla':'slide-maquinaria','Documentacion_Completa':'slide-doccompleta',
@@ -1354,45 +1440,98 @@ function defaultDesign(){
     {titulo:'Mapa de implementación por departamento', tipo:'mapa', activa:true}
   ];
 }
-let DESIGN = defaultDesign();
+function defaultPortada(){
+  return [
+    {estilo:'eyebrow', texto:'Convenio 3007 de 2025', activa:true},
+    {estilo:'titulo', texto:'Informe de Seguimiento', activa:true},
+    {estilo:'subtitulo', texto:'Análisis de Ejecución y Contactabilidad', activa:true},
+    {estilo:'etiqueta', texto:'Implementación de Planes Integrales de Reparación Colectiva', activa:true},
+    {estilo:'convenio', texto:'Convenio 3007 de 2025', activa:true}
+  ];
+}
+function defaultPages(){
+  return {
+    portada: defaultPortada(),
+    informe: defaultDesign(),
+    casos: [1,2,3,4,5].map(i => ({nombre:'Caso '+i, activa:false, secciones:[]}))
+  };
+}
+let PAGES = defaultPages();
+let DESIGN = PAGES.informe;
 
+/* ---------- PARSE de la hoja Diapositivas ---------- */
 function parseDiapositivas(rows){
-  const byOrden = {};
+  const pages = defaultPages();
+  pages.portada = []; pages.informe = [];
+  const informeByOrden = {}, casosByOrden = [{},{},{},{},{}];
+  const portadaRows = [];
+
   rows.forEach(r => {
+    const hoja = ((r['Hoja']||'Informe')+'').trim();
+    const hl = hoja.toLowerCase();
     const orden = Number(r['Orden']);
+    const tipo = ((r['Tipo']||'')+'').trim().toLowerCase();
+    const activa = ((r['Activa']||'SI')+'').trim().toUpperCase() !== 'NO';
+
+    if(hl === 'portada'){
+      portadaRows.push({orden: orden||portadaRows.length+1, activa,
+        estilo: ((r['Contenido']||'normal')+'').trim().toLowerCase(),
+        texto: (r['Detalle']||'')+''});
+      return;
+    }
+    const mCaso = hl.match(/^caso\s*([1-5])$/);
+    if(mCaso){
+      const ci = Number(mCaso[1]) - 1;
+      if(tipo === 'hoja'){
+        pages.casos[ci].nombre = (r['Seccion']||('Caso '+(ci+1)))+'';
+        pages.casos[ci].activa = activa;
+        return;
+      }
+      addSectionRow(casosByOrden[ci], r, orden, tipo, activa);
+      return;
+    }
+    /* Informe (o filas sin Hoja: compatibilidad con Excel anteriores) */
+    addSectionRow(informeByOrden, r, orden, tipo, activa);
+  });
+
+  function addSectionRow(map, r, orden, tipo, activa){
     if(!orden && orden !== 0) return;
-    if(!byOrden[orden]){
-      byOrden[orden] = {
-        titulo: (r['Seccion']||'').toString(),
-        tipo: (r['Tipo']||'').toString().trim().toLowerCase(),
-        activa: (r['Activa']||'SI').toString().trim().toUpperCase() !== 'NO',
-        fuente: (r['Fuente']||'').toString().trim(),
-        bloquesMap: {}
+    if(!map[orden]){
+      map[orden] = {
+        titulo: (r['Seccion']||'')+'', tipo, activa,
+        fuente: ((r['Fuente']||'')+'').trim(), bloquesMap: {}
       };
     }
-    const sec = byOrden[orden];
+    const sec = map[orden];
     if(sec.tipo === 'bloques'){
       const b = Number(r['Bloque'])||1, c = Number(r['Celda'])||1;
       if(!sec.bloquesMap[b]) sec.bloquesMap[b] = {};
       sec.bloquesMap[b][c] = {
-        contenido: (r['Contenido']||'texto').toString().trim().toLowerCase(),
-        titulo: (r['Titulo']||'').toString(),
-        detalle: (r['Detalle']||'').toString(),
-        cifra: (r['Cifra']||'').toString(),
-        fondo: (r['Fondo']||'blanco').toString().trim().toLowerCase(),
-        imagen: (r['Imagen']||'').toString().trim(),
-        ajuste: (r['Ajuste']||'recortar').toString().trim().toLowerCase()
+        contenido: ((r['Contenido']||'texto')+'').trim().toLowerCase(),
+        titulo: (r['Titulo']||'')+'', detalle: (r['Detalle']||'')+'',
+        cifra: (r['Cifra']||'')+'', fondo: ((r['Fondo']||'blanco')+'').trim().toLowerCase(),
+        imagen: ((r['Imagen']||'')+'').trim(), ajuste: ((r['Ajuste']||'recortar')+'').trim().toLowerCase()
       };
     }
-  });
-  return Object.keys(byOrden).map(Number).sort((a,b)=>a-b).map(o=>{
-    const s = byOrden[o];
-    const bloques = Object.keys(s.bloquesMap).map(Number).sort((a,b)=>a-b)
-      .map(b => ({ celdas: Object.keys(s.bloquesMap[b]).map(Number).sort((a,b)=>a-b).map(c => s.bloquesMap[b][c]) }));
-    return {titulo:s.titulo, tipo:s.tipo, activa:s.activa, fuente:s.fuente, bloques};
-  });
+  }
+  function finish(map){
+    return Object.keys(map).map(Number).sort((a,b)=>a-b).map(o => {
+      const s = map[o];
+      const bloques = Object.keys(s.bloquesMap).map(Number).sort((a,b)=>a-b)
+        .map(b => ({celdas: Object.keys(s.bloquesMap[b]).map(Number).sort((a,b)=>a-b).map(c => s.bloquesMap[b][c])}));
+      return {titulo:s.titulo, tipo:s.tipo, activa:s.activa, fuente:s.fuente, bloques};
+    });
+  }
+  pages.informe = finish(informeByOrden);
+  for(let i=0;i<5;i++) pages.casos[i].secciones = finish(casosByOrden[i]);
+  pages.portada = portadaRows.sort((a,b)=>a.orden-b.orden)
+    .map(p => ({estilo:p.estilo, texto:p.texto, activa:p.activa}));
+  if(!pages.portada.length) pages.portada = defaultPortada();
+  if(!pages.informe.length) pages.informe = defaultDesign();
+  return pages;
 }
 
+/* ---------- RENDER ---------- */
 function resolveImg(name){ return window.photoIndex[name] || ('fotos/' + name); }
 
 function buildBloquesSlide(sec, idx){
@@ -1427,6 +1566,14 @@ function buildBloquesSlide(sec, idx){
   return slide;
 }
 
+function renderPortada(){
+  const box = document.getElementById('coverFields');
+  box.innerHTML = PAGES.portada.filter(c => c.activa).map(c => {
+    const cls = ESTILOS_PORTADA.includes(c.estilo) ? c.estilo : 'normal';
+    return '<div class="cf-' + cls + '">' + (c.texto||'') + '</div>';
+  }).join('');
+}
+
 function renderDesign(){
   const page = document.getElementById('page-informe');
   const gracias = document.getElementById('slide-gracias');
@@ -1434,7 +1581,7 @@ function renderDesign(){
   ['slide-maquinaria','slide-doccompleta','slide-acompanamiento','slide-rehabilitacion','slide-contactabilidad','slide-mapa']
     .forEach(id => { const el = document.getElementById(id); if(el) el.style.display = 'none'; });
   let idx = 0;
-  DESIGN.forEach(sec => {
+  PAGES.informe.forEach(sec => {
     idx++;
     if(sec.tipo === 'bloques'){
       const el = buildBloquesSlide(sec, idx);
@@ -1449,135 +1596,44 @@ function renderDesign(){
       page.insertBefore(el, gracias);
     }
   });
+  ensureCollapseButtons();
 }
 
-/* ============ EDITOR ============ */
-function nuevaCelda(){ return {contenido:'texto', titulo:'', detalle:'', cifra:'', fondo:'blanco', imagen:'', ajuste:'recortar'}; }
-function agregarSeccionBloques(){
-  DESIGN.push({titulo:'Nueva sección', tipo:'bloques', activa:true, fuente:'', bloques:[{celdas:[nuevaCelda()]}]});
-  renderEditor();
-}
-function renderEditor(){
-  const box = document.getElementById('designEditor');
-  if(!box) return;
-  box.innerHTML = '';
-  DESIGN.forEach((sec, si) => {
-    const card = document.createElement('div');
-    card.className = 'ed-section';
-    const tipoLabel = sec.tipo === 'bloques' ? 'BLOQUES' : sec.tipo === 'tabla' ? 'TABLA · ' + sec.fuente : sec.tipo.toUpperCase();
-    let head = '<div class="ed-head">'
-      + '<input type="checkbox" ' + (sec.activa?'checked':'') + ' data-act="' + si + '" title="Mostrar/ocultar">'
-      + '<span class="ed-tipo">' + tipoLabel + '</span>'
-      + '<input type="text" value="' + (sec.titulo||'').replace(/"/g,'&quot;') + '" data-tit="' + si + '"' + (sec.tipo!=='bloques' ? ' disabled title="El título de las secciones de datos es fijo"' : '') + '>'
-      + '<button class="ed-btn" data-up="' + si + '">▲</button>'
-      + '<button class="ed-btn" data-down="' + si + '">▼</button>'
-      + (sec.tipo === 'bloques' ? '<button class="ed-btn danger" data-del="' + si + '">Eliminar</button>' : '')
-      + '</div>';
-    let body = '';
-    if(sec.tipo === 'bloques'){
-      body = '<div class="ed-body">';
-      sec.bloques.forEach((bl, bi) => {
-        body += '<div class="ed-bloque"><div class="ed-bloque-head">Bloque ' + (bi+1)
-          + ' · celdas: <select data-ncel="' + si + '-' + bi + '">'
-          + [1,2,3,4].map(n => '<option value="' + n + '"' + (bl.celdas.length===n?' selected':'') + '>' + n + '</option>').join('')
-          + '</select>'
-          + '<button class="ed-btn danger" data-delb="' + si + '-' + bi + '">Quitar bloque</button></div>';
-        bl.celdas.forEach((c, ci) => {
-          const k = si + '-' + bi + '-' + ci;
-          body += '<div class="ed-celda">'
-            + '<div><label>Contenido</label><select data-f="contenido" data-k="' + k + '">'
-            + ['texto','imagen','imagen+texto'].map(v => '<option' + (c.contenido===v?' selected':'') + '>' + v + '</option>').join('') + '</select></div>'
-            + '<div><label>Fondo</label><select data-f="fondo" data-k="' + k + '">'
-            + FONDOS.map(v => '<option' + (c.fondo===v?' selected':'') + '>' + v + '</option>').join('') + '</select></div>'
-            + '<div><label>Cifra destacada</label><input data-f="cifra" data-k="' + k + '" value="' + (c.cifra||'').replace(/"/g,'&quot;') + '"></div>'
-            + '<div><label>Ajuste imagen</label><select data-f="ajuste" data-k="' + k + '">'
-            + ['recortar','completa'].map(v => '<option' + (c.ajuste===v?' selected':'') + '>' + v + '</option>').join('') + '</select></div>'
-            + '<div class="full"><label>Título</label><input data-f="titulo" data-k="' + k + '" value="' + (c.titulo||'').replace(/"/g,'&quot;') + '"></div>'
-            + '<div class="full"><label>Detalle</label><textarea rows="2" data-f="detalle" data-k="' + k + '">' + (c.detalle||'') + '</textarea></div>'
-            + '<div class="full"><label>Imagen (disponibles en fotos/ e imagenes/)</label><select data-f="imagen" data-k="' + k + '">'
-            + '<option value="">(sin imagen)</option>'
-            + Object.keys(window.photoIndex).sort().map(n => '<option value="' + n + '"' + (c.imagen===n?' selected':'') + '>' + n + '</option>').join('')
-            + ((c.imagen && !(c.imagen in window.photoIndex)) ? '<option selected>' + c.imagen + '</option>' : '')
-            + '</select></div>'
-            + '</div>';
-        });
-        body += '</div>';
-      });
-      body += '<button class="ed-btn" data-addb="' + si + '">+ Agregar bloque</button></div>';
+function renderCasos(){
+  for(let i=0;i<5;i++){
+    const caso = PAGES.casos[i];
+    const page = document.getElementById('page-caso' + (i+1));
+    page.querySelectorAll('.custom-slide').forEach(el => el.remove());
+    let idx = 0;
+    caso.secciones.forEach(sec => {
+      if(sec.tipo !== 'bloques') return;
+      idx++;
+      const el = buildBloquesSlide(sec, idx);
+      if(!sec.activa) el.style.display = 'none';
+      page.appendChild(el);
+    });
+    if(!idx){
+      const empty = document.createElement('div');
+      empty.className = 'slide custom-slide';
+      empty.innerHTML = '<div class="slide-eyebrow">' + caso.nombre + '</div><h2>' + caso.nombre + '</h2>'
+        + '<p class="subtitle" style="color:#999; font-style:italic;">Sin secciones — agrégalas desde Configuración → Diseño de hojas.</p>';
+      page.appendChild(empty);
     }
-    card.innerHTML = head + body;
-    box.appendChild(card);
-  });
-
-  box.querySelectorAll('[data-act]').forEach(el => el.addEventListener('change', e => { DESIGN[+e.target.dataset.act].activa = e.target.checked; }));
-  box.querySelectorAll('[data-tit]').forEach(el => el.addEventListener('input', e => { DESIGN[+e.target.dataset.tit].titulo = e.target.value; }));
-  box.querySelectorAll('[data-up]').forEach(el => el.addEventListener('click', e => {
-    const i = +e.target.dataset.up; if(i>0){ [DESIGN[i-1],DESIGN[i]] = [DESIGN[i],DESIGN[i-1]]; renderEditor(); }
-  }));
-  box.querySelectorAll('[data-down]').forEach(el => el.addEventListener('click', e => {
-    const i = +e.target.dataset.down; if(i<DESIGN.length-1){ [DESIGN[i+1],DESIGN[i]] = [DESIGN[i],DESIGN[i+1]]; renderEditor(); }
-  }));
-  box.querySelectorAll('[data-del]').forEach(el => el.addEventListener('click', e => {
-    if(confirm('¿Eliminar esta sección?')){ DESIGN.splice(+e.target.dataset.del,1); renderEditor(); }
-  }));
-  box.querySelectorAll('[data-addb]').forEach(el => el.addEventListener('click', e => {
-    DESIGN[+e.target.dataset.addb].bloques.push({celdas:[nuevaCelda()]}); renderEditor();
-  }));
-  box.querySelectorAll('[data-delb]').forEach(el => el.addEventListener('click', e => {
-    const [si,bi] = e.target.dataset.delb.split('-').map(Number);
-    DESIGN[si].bloques.splice(bi,1); renderEditor();
-  }));
-  box.querySelectorAll('[data-ncel]').forEach(el => el.addEventListener('change', e => {
-    const [si,bi] = e.target.dataset.ncel.split('-').map(Number);
-    const celdas = DESIGN[si].bloques[bi].celdas, n = +e.target.value;
-    while(celdas.length < n) celdas.push(nuevaCelda());
-    celdas.length = n;
-    renderEditor();
-  }));
-  box.querySelectorAll('[data-f]').forEach(el => {
-    const fn = e => {
-      const [si,bi,ci] = e.target.dataset.k.split('-').map(Number);
-      DESIGN[si].bloques[bi].celdas[ci][e.target.dataset.f] = e.target.value;
-    };
-    el.addEventListener('input', fn);
-    el.addEventListener('change', fn);
-  });
+    /* navegacion */
+    const btn = document.querySelector('#casosSubmenu button[data-page="caso' + (i+1) + '"]');
+    if(btn){ btn.textContent = caso.nombre; btn.style.display = caso.activa ? '' : 'none'; }
+  }
+  const alguno = PAGES.casos.some(c => c.activa);
+  document.getElementById('btnCasosParent').style.display = alguno ? '' : 'none';
+  document.getElementById('casosSubmenu').style.display = alguno ? '' : 'none';
+  ensureCollapseButtons();
 }
 
-/* ============ EXPORTAR EXCEL ACTUALIZADO ============ */
-function descargarExcelActualizado(){
-  const wb = LOADED_WB || XLSX.utils.book_new();
-  const aoa = [['Seccion','Orden','Tipo','Activa','Fuente','Bloque','Celda','Contenido','Titulo','Detalle','Cifra','Fondo','Imagen','Ajuste']];
-  DESIGN.forEach((sec, i) => {
-    const orden = i+1, act = sec.activa ? 'SI' : 'NO';
-    if(sec.tipo === 'bloques'){
-      sec.bloques.forEach((bl, bi) => bl.celdas.forEach((c, ci) => {
-        aoa.push([sec.titulo, orden, 'bloques', act, '', bi+1, ci+1, c.contenido, c.titulo, c.detalle, c.cifra, c.fondo, c.imagen, c.ajuste]);
-      }));
-      if(!sec.bloques.length) aoa.push([sec.titulo, orden, 'bloques', act, '', '', '', '', '', '', '', '', '', '']);
-    } else {
-      aoa.push([sec.titulo, orden, sec.tipo, act, sec.fuente||'', '', '', '', '', '', '', '', '', '']);
-    }
-  });
-  const ws = XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols'] = [{wch:34},{wch:8},{wch:14},{wch:8},{wch:26},{wch:8},{wch:8},{wch:14},{wch:26},{wch:50},{wch:10},{wch:10},{wch:20},{wch:10}];
-  if(wb.SheetNames.includes('Diapositivas')){ wb.Sheets['Diapositivas'] = ws; }
-  else { XLSX.utils.book_append_sheet(wb, ws, 'Diapositivas'); }
-  XLSX.writeFile(wb, 'informe.xlsx');
-}
+function renderAll(){ renderPortada(); renderDesign(); renderCasos(); }
 
-/* ============ HOOK DE CARGA ============ */
-window.onWorkbookLoaded = function(wb){
-  LOADED_WB = wb;
-  const rows = sheetToRows(wb, 'Diapositivas');
-  if(rows && rows.length){ DESIGN = parseDiapositivas(rows); }
-  renderDesign();
-  renderEditor();
-};
-
-/* ===== Colapsar/expandir secciones del informe ===== */
+/* ---------- Colapsar secciones ---------- */
 function ensureCollapseButtons(){
-  document.querySelectorAll('#page-informe .slide').forEach(s => {
+  document.querySelectorAll('#page-informe .slide, .page-caso .slide').forEach(s => {
     if(s.id === 'slide-gracias' || !s.querySelector('h2') || s.querySelector('.collapse-btn')) return;
     const b = document.createElement('button');
     b.className = 'collapse-btn'; b.textContent = '▾'; b.title = 'Contraer / expandir sección';
@@ -1588,19 +1644,280 @@ function ensureCollapseButtons(){
     s.appendChild(b);
   });
 }
-const _renderDesignBase = renderDesign;
-renderDesign = function(){ _renderDesignBase(); ensureCollapseButtons(); };
 
-/* ===== Imagenes del informe: carpeta imagenes/ del repositorio ===== */
+/* ============ EDITOR (por hoja, con acordeón) ============ */
+let ED_HOJA = 'informe';
+function nuevaCelda(){ return {contenido:'texto', titulo:'', detalle:'', cifra:'', fondo:'blanco', imagen:'', ajuste:'recortar'}; }
+
+function agregarElemento(){
+  if(ED_HOJA === 'portada'){
+    PAGES.portada.push({estilo:'normal', texto:'Nuevo campo de texto', activa:true});
+  } else {
+    const arr = seccionesActuales();
+    arr.push({titulo:'Nueva sección', tipo:'bloques', activa:true, fuente:'', bloques:[{celdas:[nuevaCelda()]}], _open:true});
+  }
+  renderEditor();
+}
+function seccionesActuales(){
+  if(ED_HOJA === 'informe') return PAGES.informe;
+  const m = ED_HOJA.match(/^caso([1-5])$/);
+  return m ? PAGES.casos[Number(m[1])-1].secciones : PAGES.informe;
+}
+
+function renderHojaBar(){
+  const bar = document.getElementById('edHojaBar');
+  const items = [
+    {id:'portada', label:'Portada'},
+    {id:'informe', label:'Informe'}
+  ].concat(PAGES.casos.map((c,i)=>({id:'caso'+(i+1), label:c.nombre, inactiva:!c.activa})));
+  bar.innerHTML = items.map(it =>
+    '<button data-hoja="' + it.id + '" class="' + (ED_HOJA===it.id?'sel ':'') + (it.inactiva?'inactiva':'') + '">' + it.label + '</button>'
+  ).join('');
+  bar.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { ED_HOJA = b.dataset.hoja; renderEditor(); }));
+  document.getElementById('btnAgregarElem').textContent = ED_HOJA==='portada' ? '+ Agregar campo de texto' : '+ Agregar sección de bloques';
+}
+
+function renderCasoHead(){
+  const head = document.getElementById('edCasoHead');
+  const m = ED_HOJA.match(/^caso([1-5])$/);
+  if(!m){ head.innerHTML = ''; return; }
+  const caso = PAGES.casos[Number(m[1])-1];
+  head.innerHTML = '<div class="caso-head">'
+    + '<label><input type="checkbox" id="casoActiva" ' + (caso.activa?'checked':'') + '> Hoja activa (visible en el menú)</label>'
+    + '<input type="text" id="casoNombre" value="' + (caso.nombre||'').replace(/"/g,'&quot;') + '" placeholder="Nombre del caso">'
+    + '</div>';
+  document.getElementById('casoActiva').addEventListener('change', e => { caso.activa = e.target.checked; renderHojaBar(); });
+  document.getElementById('casoNombre').addEventListener('input', e => { caso.nombre = e.target.value; });
+}
+
+function imgOptions(sel){
+  return '<option value="">(sin imagen)</option>'
+    + Object.keys(window.photoIndex).sort().map(n => '<option value="' + n + '"' + (sel===n?' selected':'') + '>' + n + '</option>').join('')
+    + ((sel && !(sel in window.photoIndex)) ? '<option selected>' + sel + '</option>' : '');
+}
+
+function renderEditor(){
+  const box = document.getElementById('designEditor');
+  if(!box) return;
+  renderHojaBar();
+  renderCasoHead();
+  box.innerHTML = '';
+
+  /* ----- Editor de PORTADA ----- */
+  if(ED_HOJA === 'portada'){
+    PAGES.portada.forEach((campo, i) => {
+      const row = document.createElement('div');
+      row.className = 'ed-section open';
+      row.innerHTML = '<div class="ed-head">'
+        + '<input type="checkbox" ' + (campo.activa?'checked':'') + ' title="Mostrar/ocultar">'
+        + '<select style="width:130px; padding:7px; border:1px solid var(--gray-line); border-radius:5px; font-family:inherit; font-size:12px;">'
+        + ESTILOS_PORTADA.map(e => '<option' + (campo.estilo===e?' selected':'') + '>' + e + '</option>').join('') + '</select>'
+        + '<input type="text" value="' + (campo.texto||'').replace(/"/g,'&quot;') + '">'
+        + '<button class="ed-btn">▲</button><button class="ed-btn">▼</button>'
+        + '<button class="ed-btn danger">Eliminar</button></div>';
+      const [chk, sel, txt, up, down, del] = row.querySelectorAll('input,select,button');
+      chk.addEventListener('change', e => campo.activa = e.target.checked);
+      sel.addEventListener('change', e => campo.estilo = e.target.value);
+      txt.addEventListener('input', e => campo.texto = e.target.value);
+      up.addEventListener('click', () => { if(i>0){ [PAGES.portada[i-1],PAGES.portada[i]]=[PAGES.portada[i],PAGES.portada[i-1]]; renderEditor(); } });
+      down.addEventListener('click', () => { if(i<PAGES.portada.length-1){ [PAGES.portada[i+1],PAGES.portada[i]]=[PAGES.portada[i],PAGES.portada[i+1]]; renderEditor(); } });
+      del.addEventListener('click', () => { if(confirm('¿Eliminar este campo?')){ PAGES.portada.splice(i,1); renderEditor(); } });
+      box.appendChild(row);
+    });
+    return;
+  }
+
+  /* ----- Editor de INFORME / CASOS ----- */
+  const secs = seccionesActuales();
+  secs.forEach((sec, si) => {
+    const card = document.createElement('div');
+    card.className = 'ed-section' + (sec._open ? ' open' : '');
+    const tipoLabel = sec.tipo === 'bloques' ? 'BLOQUES' : sec.tipo === 'tabla' ? 'TABLA · ' + sec.fuente : sec.tipo.toUpperCase();
+    const head = document.createElement('div');
+    head.className = 'ed-head';
+    head.innerHTML = '<button class="ed-btn exp">' + (sec._open ? '▾' : '▸') + '</button>'
+      + '<input type="checkbox" ' + (sec.activa?'checked':'') + ' title="Mostrar/ocultar">'
+      + '<span class="ed-tipo">' + tipoLabel + '</span>'
+      + '<input type="text" value="' + (sec.titulo||'').replace(/"/g,'&quot;') + '"' + (sec.tipo!=='bloques' ? ' disabled' : '') + '>'
+      + '<button class="ed-btn">▲</button><button class="ed-btn">▼</button>'
+      + (sec.tipo === 'bloques' ? '<button class="ed-btn danger">Eliminar</button>' : '');
+    card.appendChild(head);
+    const hb = head.querySelectorAll('button, input');
+    const expB = head.querySelector('.exp');
+    expB.addEventListener('click', () => { sec._open = !sec._open; renderEditor(); });
+    head.querySelector('input[type=checkbox]').addEventListener('change', e => sec.activa = e.target.checked);
+    head.querySelector('input[type=text]').addEventListener('input', e => sec.titulo = e.target.value);
+    const btns = head.querySelectorAll('button.ed-btn:not(.exp)');
+    btns[0].addEventListener('click', () => { if(si>0){ [secs[si-1],secs[si]]=[secs[si],secs[si-1]]; renderEditor(); } });
+    btns[1].addEventListener('click', () => { if(si<secs.length-1){ [secs[si+1],secs[si]]=[secs[si],secs[si+1]]; renderEditor(); } });
+    if(btns[2]) btns[2].addEventListener('click', () => { if(confirm('¿Eliminar esta sección?')){ secs.splice(si,1); renderEditor(); } });
+
+    if(sec.tipo === 'bloques'){
+      const body = document.createElement('div');
+      body.className = 'ed-body';
+      sec.bloques.forEach((bl, bi) => {
+        const bdiv = document.createElement('div');
+        bdiv.className = 'ed-bloque';
+        const bhead = document.createElement('div');
+        bhead.className = 'ed-bloque-head';
+        bhead.innerHTML = 'Bloque ' + (bi+1) + ' · celdas: <select>'
+          + [1,2,3,4].map(n => '<option value="' + n + '"' + (bl.celdas.length===n?' selected':'') + '>' + n + '</option>').join('')
+          + '</select> <button class="ed-btn danger">Quitar bloque</button>';
+        bhead.querySelector('select').addEventListener('change', e => {
+          const n = +e.target.value;
+          while(bl.celdas.length < n) bl.celdas.push(nuevaCelda());
+          bl.celdas.length = n;
+          sec._open = true; renderEditor();
+        });
+        bhead.querySelector('button').addEventListener('click', () => { sec.bloques.splice(bi,1); sec._open = true; renderEditor(); });
+        bdiv.appendChild(bhead);
+
+        bl.celdas.forEach(c => {
+          const cd = document.createElement('div');
+          cd.className = 'ed-celda';
+          cd.innerHTML =
+            '<div><label>Contenido</label><select class="f-cont">'
+              + ['texto','imagen','imagen+texto'].map(v => '<option' + (c.contenido===v?' selected':'') + '>' + v + '</option>').join('') + '</select></div>'
+            + '<div><label>Fondo</label><div class="swatches">'
+              + FONDOS.map(v => '<span class="swatch sw-' + v + (c.fondo===v?' sel':'') + '" data-v="' + v + '" title="' + v + '"></span>').join('') + '</div></div>'
+            + '<div><label>Cifra destacada</label><input class="f-cifra" value="' + (c.cifra||'').replace(/"/g,'&quot;') + '"></div>'
+            + '<div><label>Ajuste imagen</label><select class="f-aj">'
+              + ['recortar','completa'].map(v => '<option' + (c.ajuste===v?' selected':'') + '>' + v + '</option>').join('') + '</select></div>'
+            + '<div class="full"><label>Título</label><input class="f-tit" value="' + (c.titulo||'').replace(/"/g,'&quot;') + '"></div>'
+            + '<div class="full"><label>Detalle</label><textarea rows="2" class="f-det">' + (c.detalle||'') + '</textarea></div>'
+            + '<div class="full"><label>Imagen</label><div class="img-pick"><select class="f-img">' + imgOptions(c.imagen) + '</select>'
+              + '<img class="img-prev" src="' + (c.imagen ? resolveImg(c.imagen) : '') + '" style="' + (c.imagen?'':'display:none;') + '"></div></div>';
+          cd.querySelector('.f-cont').addEventListener('change', e => c.contenido = e.target.value);
+          cd.querySelector('.f-cifra').addEventListener('input', e => c.cifra = e.target.value);
+          cd.querySelector('.f-aj').addEventListener('change', e => c.ajuste = e.target.value);
+          cd.querySelector('.f-tit').addEventListener('input', e => c.titulo = e.target.value);
+          cd.querySelector('.f-det').addEventListener('input', e => c.detalle = e.target.value);
+          const imgSel = cd.querySelector('.f-img'), imgPrev = cd.querySelector('.img-prev');
+          imgSel.addEventListener('change', e => {
+            c.imagen = e.target.value;
+            if(c.imagen){ imgPrev.src = resolveImg(c.imagen); imgPrev.style.display = ''; }
+            else imgPrev.style.display = 'none';
+          });
+          cd.querySelectorAll('.swatch').forEach(sw => sw.addEventListener('click', () => {
+            c.fondo = sw.dataset.v;
+            cd.querySelectorAll('.swatch').forEach(x => x.classList.remove('sel'));
+            sw.classList.add('sel');
+          }));
+          bdiv.appendChild(cd);
+        });
+        body.appendChild(bdiv);
+      });
+      const addB = document.createElement('button');
+      addB.className = 'ed-btn'; addB.textContent = '+ Agregar bloque';
+      addB.addEventListener('click', () => { sec.bloques.push({celdas:[nuevaCelda()]}); sec._open = true; renderEditor(); });
+      body.appendChild(addB);
+      card.appendChild(body);
+    }
+    box.appendChild(card);
+  });
+}
+window.renderEditor = renderEditor;
+
+/* ============ SERIALIZAR y EXPORTAR ============ */
+function serializeDiapositivas(){
+  const aoa = [['Hoja','Seccion','Orden','Tipo','Activa','Fuente','Bloque','Celda','Contenido','Titulo','Detalle','Cifra','Fondo','Imagen','Ajuste']];
+  PAGES.portada.forEach((c, i) => {
+    aoa.push(['Portada','',i+1,'campo', c.activa?'SI':'NO','','','',c.estilo,'',c.texto,'','','','']);
+  });
+  const pushSecs = (hoja, secs) => {
+    secs.forEach((sec, i) => {
+      const orden = i+1, act = sec.activa?'SI':'NO';
+      if(sec.tipo === 'bloques'){
+        let any = false;
+        sec.bloques.forEach((bl, bi) => bl.celdas.forEach((c, ci) => {
+          any = true;
+          aoa.push([hoja, sec.titulo, orden, 'bloques', act, '', bi+1, ci+1, c.contenido, c.titulo, c.detalle, c.cifra, c.fondo, c.imagen, c.ajuste]);
+        }));
+        if(!any) aoa.push([hoja, sec.titulo, orden, 'bloques', act, '', '', '', '', '', '', '', '', '', '']);
+      } else {
+        aoa.push([hoja, sec.titulo, orden, sec.tipo, act, sec.fuente||'', '', '', '', '', '', '', '', '', '']);
+      }
+    });
+  };
+  pushSecs('Informe', PAGES.informe);
+  PAGES.casos.forEach((caso, i) => {
+    const hoja = 'Caso ' + (i+1);
+    aoa.push([hoja, caso.nombre, 0, 'hoja', caso.activa?'SI':'NO', '', '', '', '', '', '', '', '', '', '']);
+    pushSecs(hoja, caso.secciones);
+  });
+  return aoa;
+}
+function buildWorkbook(){
+  const wb = LOADED_WB || XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(serializeDiapositivas());
+  ws['!cols'] = [{wch:12},{wch:34},{wch:8},{wch:14},{wch:8},{wch:26},{wch:8},{wch:8},{wch:14},{wch:26},{wch:50},{wch:10},{wch:10},{wch:22},{wch:10}];
+  if(wb.SheetNames.includes('Diapositivas')){ wb.Sheets['Diapositivas'] = ws; }
+  else { XLSX.utils.book_append_sheet(wb, ws, 'Diapositivas'); }
+  return wb;
+}
+function descargarExcelActualizado(){ XLSX.writeFile(buildWorkbook(), 'informe.xlsx'); }
+
+/* ============ GUARDAR EN GITHUB ============ */
+function getConfigObj(){
+  return {
+    fechaCorte: document.getElementById('fechaCorteInput').value,
+    nombreHojaInforme: document.getElementById('tabNameInforme').value,
+    nombreHojaFotos: document.getElementById('tabNameFotos').value,
+    logo: (document.getElementById('customLogo').style.display !== 'none' &&
+           document.getElementById('customLogo').src.startsWith('data:')) ? 'assets/logo.png'
+          : (document.getElementById('customLogo').getAttribute('src') || null)
+  };
+}
+async function ghRequest(url, token, opts){
+  opts = opts || {};
+  opts.headers = Object.assign({
+    'Authorization': 'Bearer ' + token,
+    'Accept': 'application/vnd.github+json'
+  }, opts.headers || {});
+  return fetch(url, opts);
+}
+async function ghPutFile(repo, path, token, base64content, message){
+  const base = 'https://api.github.com/repos/' + repo + '/contents/' + path;
+  let sha = null;
+  const g = await ghRequest(base + '?ref=main', token);
+  if(g.ok){ sha = (await g.json()).sha; }
+  else if(g.status !== 404){ throw new Error('Error leyendo ' + path + ' (HTTP ' + g.status + ')'); }
+  const body = { message: message, content: base64content, branch: 'main' };
+  if(sha) body.sha = sha;
+  const p = await ghRequest(base, token, { method:'PUT', body: JSON.stringify(body) });
+  if(!p.ok) throw new Error('Error guardando ' + path + ' (HTTP ' + p.status + ')');
+}
+async function guardarEnGitHub(){
+  const st = document.getElementById('ghStatus');
+  const repo = document.getElementById('ghRepo').value.trim();
+  const token = document.getElementById('ghToken').value.trim();
+  if(!repo || !token){ st.className='err'; st.textContent = 'Escribe el repositorio y el token.'; return; }
+  try{ localStorage.setItem('gh_token', token); }catch(e){}
+  st.className=''; st.textContent = 'Guardando en el repositorio…';
+  try{
+    const xlsxB64 = XLSX.write(buildWorkbook(), {type:'base64', bookType:'xlsx'});
+    await ghPutFile(repo, 'data/informe.xlsx', token, xlsxB64, 'Actualización de diseño desde el informe interactivo');
+    const cfgB64 = btoa(unescape(encodeURIComponent(JSON.stringify(getConfigObj(), null, 2))));
+    await ghPutFile(repo, 'config.json', token, cfgB64, 'Actualización de configuración desde el informe interactivo');
+    st.className='ok'; st.textContent = 'Guardado en el repositorio. La página publicada se actualiza en ~1 minuto.';
+  }catch(err){
+    st.className='err';
+    st.textContent = 'No se pudo guardar: ' + err.message + '. Verifica el token (permiso Contents: Read and write) y el nombre del repositorio.';
+  }
+}
+try{ const t = localStorage.getItem('gh_token'); if(t) document.getElementById('ghToken').value = t; }catch(e){}
+function olvidarToken(){
+  try{ localStorage.removeItem('gh_token'); }catch(e){}
+  document.getElementById('ghToken').value = '';
+  const st = document.getElementById('ghStatus');
+  st.className = ''; st.textContent = 'Token olvidado en este equipo.';
+}
+
+/* ============ IMAGENES DEL INFORME (carpeta imagenes/) ============ */
 fetch('imagenes/manifest.json?v=' + Date.now(), {cache:'no-store'})
   .then(r => { if(!r.ok) throw 0; return r.json(); })
-  .then(m => {
-    (m.archivos || []).forEach(f => { window.photoIndex[f] = 'imagenes/' + f; });
-    renderEditor();
-  })
+  .then(m => { (m.archivos || []).forEach(f => { window.photoIndex[f] = 'imagenes/' + f; }); renderEditor(); })
   .catch(()=>{});
-
-/* ===== Imagenes del informe: carga en sesion (tarjeta 4b) ===== */
 document.getElementById('imgInformeInput').addEventListener('change', function(e){
   const files = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
   if(!files.length) return;
@@ -1611,9 +1928,9 @@ document.getElementById('imgInformeInput').addEventListener('change', function(e
       window.photoIndex[f.name] = ev.target.result;
       done++;
       if(done === files.length){
-        document.getElementById('imgInformeStatus').textContent =
-          'Agregadas ' + files.length + ' imagen(es) al selector del editor (solo esta sesión; súbelas a imagenes/ del repositorio para que sean permanentes).';
-        document.getElementById('imgInformeStatus').className = 'ok';
+        const s = document.getElementById('imgInformeStatus');
+        s.textContent = 'Agregadas ' + files.length + ' imagen(es) al selector del editor (solo esta sesión; súbelas a imagenes/ del repositorio para que sean permanentes).';
+        s.className = 'ok';
         renderEditor();
       }
     };
@@ -1621,8 +1938,17 @@ document.getElementById('imgInformeInput').addEventListener('change', function(e
   });
 });
 
-/* estado inicial (sin Excel): diseño por defecto */
-renderDesign();
+/* ============ HOOK DE CARGA DEL EXCEL ============ */
+window.onWorkbookLoaded = function(wb){
+  LOADED_WB = wb;
+  const rows = sheetToRows(wb, 'Diapositivas');
+  if(rows && rows.length){ PAGES = parseDiapositivas(rows); DESIGN = PAGES.informe; }
+  renderAll();
+  renderEditor();
+};
+
+/* estado inicial */
+renderAll();
 renderEditor();
 </script>
 
