@@ -11,8 +11,11 @@ de Reparación Colectiva (Unidad para las Víctimas · CISP).
 ├── data/
 │   └── informe.xlsx    → Datos del corte (tablas del informe + hoja Insumo_Sujetos para el mapa)
 ├── fotos/
-│   ├── manifest.json   → Índice de fotos por sujeto
+│   ├── manifest.json   → Índice de fotos por sujeto (Registro Fotográfico)
 │   └── *.jpeg          → Fotografías del registro
+├── imagenes/
+│   ├── manifest.json   → Índice de imágenes para las diapositivas del Informe
+│   └── *.jpg           → Imágenes de uso general (no aparecen en el Registro Fotográfico)
 ├── assets/
 │   ├── footer.png      → Cinta institucional (pie de página de cada sección)
 │   └── logo.png        → (Opcional) Logo personalizado
@@ -66,11 +69,32 @@ constante `EXPECTED` en `index.html`.
 
 ### Hoja `Diapositivas` (estructura)
 
-Columnas: `Seccion`, `Orden`, `Tipo` (`tabla` · `contactabilidad` · `mapa` · `bloques`), `Activa` (SI/NO),
-`Fuente` (para tipo tabla: nombre de la hoja de datos), y para tipo `bloques` una fila por celda con:
+Columnas: `Hoja` (`Portada` · `Informe` · `Caso 1` a `Caso 5`), `Seccion`, `Orden`,
+`Tipo` (`tabla` · `contactabilidad` · `mapa` · `bloques` · `campo` para portada · `hoja` para definir un caso),
+`Activa` (SI/NO), `Fuente` (para tipo tabla: nombre de la hoja de datos), y para tipo `bloques` una fila por celda con:
 `Bloque` (1-4), `Celda` (1-4), `Contenido` (`texto` · `imagen` · `imagen+texto`), `Titulo`, `Detalle`,
-`Cifra`, `Fondo` (`blanco` · `azul` · `dorado` · `rojo` · `gris`), `Imagen` (nombre de archivo en `fotos/`)
+`Cifra`, `Fondo` (`blanco` · `azul` · `dorado` · `rojo` · `gris`), `Imagen` (nombre de archivo en `fotos/` o `imagenes/`)
 y `Ajuste` (`recortar` · `completa`).
+
+- **Portada**: filas con `Hoja=Portada`, `Tipo=campo`; el estilo del campo va en `Contenido`
+  (`eyebrow`, `titulo`, `subtitulo`, `etiqueta`, `convenio`, `normal`) y el texto en `Detalle`.
+- **Casos Emblemáticos**: cada caso se define con una fila `Tipo=hoja` (nombre en `Seccion`, estado en `Activa`)
+  y sus secciones de bloques con `Hoja=Caso N`. Los casos inactivos no aparecen en el menú.
+
+## Guardar directo desde el informe (token de GitHub)
+
+En **Configuración → 7 · Guardar directo en el repositorio** puedes publicar el Excel de diseño y el
+config.json sin descargar archivos. Requiere un token de GitHub:
+
+1. GitHub → tu perfil → **Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token**.
+2. Repository access: **Only select repositories** → este repositorio.
+3. Permissions → Repository permissions → **Contents: Read and write**. Lo demás en "No access".
+4. Define una fecha de expiración corta (30-90 días) y genera el token.
+5. Pégalo en el informe y usa "Guardar Excel y config en el repositorio".
+
+> El token es una llave de escritura sobre el repositorio: no lo compartas ni lo publiques.
+> El informe lo recuerda en el equipo donde se pegó (queda en el navegador hasta usar el botón
+> "Olvidar token" o hasta que expire). En computadores compartidos, usar "Olvidar token" al terminar.
 
 ## Probar en el computador antes de subir
 
