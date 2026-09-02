@@ -71,13 +71,18 @@ constante `EXPECTED` en `index.html`.
 
 Columnas: `Hoja` (`Portada` · `Informe` · `Caso 1` a `Caso 5`), `Seccion`, `Orden`,
 `Tipo` (`tabla` · `contactabilidad` · `mapa` · `bloques` · `subportada` · `tablamanual` · `grafico` · `campo` para portada · `hoja` para definir un caso),
-`Activa` (SI/NO), `Fuente` (para tipo tabla: nombre de la hoja de datos), y para tipo `bloques` una fila por celda con:
+`Activa` (SI/NO), `Fuente` (para tipo tabla: nombre de la hoja de datos; para tipo bloques: enlace opcional a la
+fuente de esos datos, igual en todas las filas de un mismo bloque), y para tipo `bloques` una fila por celda con:
 `Bloque` (1-4), `Celda` (1-4), `Contenido` (`texto` · `imagen` · `imagen+texto`), `Titulo`, `Detalle`,
 `Cifra`, `Fondo` (`blanco` · `azul` · `dorado` · `rojo` · `gris`), `Imagen` (nombre de archivo en `fotos/` o `imagenes/`)
 y `Ajuste` (`recortar` · `completa`).
 
 - **Portada**: filas con `Hoja=Portada`, `Tipo=campo`; el estilo del campo va en `Contenido`
   (`eyebrow`, `titulo`, `subtitulo`, `etiqueta`, `convenio`, `normal`) y el texto en `Detalle`.
+- **Enlace a la fuente en bloques**: cada bloque (no cada celda) puede tener un enlace opcional a la fuente de
+  esos datos, que aparece como un pequeño pie de página dentro del bloque ("Ver fuente ↗"). Se deja vacío en los
+  bloques que no tengan una fuente externa que enlazar. Se edita en **Diseño de hojas**, justo debajo del selector
+  de número de celdas de cada bloque.
 - **Subportada**: sección de tipo `Tipo=subportada` dentro de `Informe` o de un `Caso N`, para introducir un subtema
   con la misma configuración visual que la Portada. Una fila por campo, usando `Bloque` como número de campo (orden),
   `Contenido` para el estilo (mismos valores que la Portada), `Detalle` para el texto y `Cifra` (SI/NO) para

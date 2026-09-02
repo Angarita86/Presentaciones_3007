@@ -304,6 +304,9 @@
   .bg-dorado{ background:#FDF4D7; border-color:#EFD98A; } .bg-dorado .bkpi, .bg-dorado .btitulo{ color:#8A6400; }
   .bg-rojo{ background:#FBEBED; border-color:#EFB9C0; } .bg-rojo .bkpi, .bg-rojo .btitulo{ color:var(--red); }
   .bg-gris{ background:#F3F5F8; }
+  .bloque-fuente{ grid-column:1 / -1; text-align:right; font-size:11px; margin-top:-6px; }
+  .bloque-fuente a{ color:var(--muted); text-decoration:none; border-bottom:1px dotted var(--muted); }
+  .bloque-fuente a:hover{ color:var(--navy); border-bottom-color:var(--navy); }
   table.data thead.th-azul th{ background:var(--navy); color:#fff; }
   table.data thead.th-dorado th{ background:#F2B705; color:#5C4300; }
   table.data thead.th-rojo th{ background:#C8102E; color:#fff; }
@@ -531,8 +534,8 @@
         <code>Diapositivas</code> del Excel. Puedes editarla directamente en Excel, o de forma visual en
         <b>Configuración → Diseño de hojas</b>: activar/desactivar secciones, reordenarlas (▲▼), y elegir en el
         desplegable qué tipo de sección agregar — "Sección de bloques" (de 1 a 4 bloques horizontales, cada uno con
-        1 a 4 celdas de texto, imagen o imagen+texto, con título, detalle, cifra destacada, fondo de color y ajuste
-        de imagen), "Subportada" (los mismos campos y estilos de la Portada — eyebrow, título, subtítulo, etiqueta,
+        1 a 4 celdas de texto, imagen o imagen+texto, con título, detalle, cifra destacada, fondo de color, ajuste
+        de imagen, y opcionalmente un enlace a la fuente de esos datos que aparece como pie de página del bloque), "Subportada" (los mismos campos y estilos de la Portada — eyebrow, título, subtítulo, etiqueta,
         convenio, normal — para introducir un subtema con la misma configuración visual que la portada principal),
         o "Tabla manual" (una tabla pequeña que no viene del Excel de datos, sino que se escribe directamente en el
         editor: al crearla defines cuántas filas y cuántas columnas necesitas, con un máximo de 50 filas y 12
@@ -1724,7 +1727,7 @@ function parseDiapositivas(rows){
     if(!map[orden]){
       map[orden] = {
         titulo: (r['Seccion']||'')+'', tipo, activa,
-        fuente: ((r['Fuente']||'')+'').trim(), bloquesMap: {}, camposMap: {}, colsMap: {}, filasMap: {}, colorEncabezado: 'azul'
+        fuente: ((r['Fuente']||'')+'').trim(), bloquesMap: {}, camposMap: {}, colsMap: {}, filasMap: {}, colorEncabezado: 'azul', fuentesBloque: {}
       };
     }
     const sec = map[orden];
@@ -1737,6 +1740,7 @@ function parseDiapositivas(rows){
         cifra: (r['Cifra']||'')+'', fondo: ((r['Fondo']||'blanco')+'').trim().toLowerCase(),
         imagen: ((r['Imagen']||'')+'').trim(), ajuste: ((r['Ajuste']||'recortar')+'').trim().toLowerCase()
       };
+      if(r['Fuente']) sec.fuentesBloque[b] = ((r['Fuente']||'')+'').trim();
     } else if(sec.tipo === 'subportada'){
       const i = Number(r['Bloque']) || (Object.keys(sec.camposMap).length + 1);
       sec.camposMap[i] = {
@@ -1786,7 +1790,10 @@ function parseDiapositivas(rows){
         return {titulo:s.titulo, tipo:s.tipo, activa:s.activa, fuente:s.fuente, tipoGrafico: s.tipoGrafico||'barras', colEtiqueta: s.colEtiqueta||'', colValor: s.colValor||'', origen: s.origen||'excel', tablaRef: s.tablaRef||''};
       }
       const bloques = Object.keys(s.bloquesMap).map(Number).sort((a,b)=>a-b)
-        .map(b => ({celdas: Object.keys(s.bloquesMap[b]).map(Number).sort((a,b)=>a-b).map(c => s.bloquesMap[b][c])}));
+        .map(b => ({
+          celdas: Object.keys(s.bloquesMap[b]).map(Number).sort((a,b)=>a-b).map(c => s.bloquesMap[b][c]),
+          fuenteUrl: (s.fuentesBloque && s.fuentesBloque[b]) || ''
+        }));
       return {titulo:s.titulo, tipo:s.tipo, activa:s.activa, fuente:s.fuente, bloques};
     });
   }
@@ -1899,6 +1906,11 @@ function buildBloquesSlide(sec, idx){
       }
       inner += '</div>';
     });
+    if(bl.fuenteUrl){
+      let url = bl.fuenteUrl.trim();
+      if(!/^https?:\/\//i.test(url)) url = 'https://' + url;
+      inner += '<div class="bloque-fuente"><a href="' + escHtml(url) + '" target="_blank" rel="noopener noreferrer">Ver fuente ↗</a></div>';
+    }
     inner += '</div>';
   });
   slide.innerHTML = inner;
@@ -2162,7 +2174,7 @@ function agregarElemento(){
     } else if(tipo === 'grafico'){
       arr.push({titulo:'Nuevo gráfico', tipo:'grafico', activa:true, fuente:'', tipoGrafico:'barras', origen:'excel', tablaRef:'', colEtiqueta:'', colValor:'', _open:true});
     } else {
-      arr.push({titulo:'Nueva sección', tipo:'bloques', activa:true, fuente:'', bloques:[{celdas:[nuevaCelda()]}], _open:true});
+      arr.push({titulo:'Nueva sección', tipo:'bloques', activa:true, fuente:'', bloques:[{celdas:[nuevaCelda()], fuenteUrl:''}], _open:true});
     }
   }
   renderEditor();
@@ -2294,6 +2306,13 @@ function renderEditor(){
         bhead.querySelector('button').addEventListener('click', () => { sec.bloques.splice(bi,1); sec._open = true; renderEditor(); });
         bdiv.appendChild(bhead);
 
+        const fuenteRow = document.createElement('div');
+        fuenteRow.style.cssText = 'display:flex; align-items:center; gap:6px; margin:2px 0 10px; font-size:12px;';
+        fuenteRow.innerHTML = '<label style="color:var(--muted); white-space:nowrap;">Enlace a la fuente (opcional, déjalo vacío si no aplica)</label>'
+          + '<input type="url" placeholder="https://…" value="' + (bl.fuenteUrl||'').replace(/"/g,'&quot;') + '" style="flex:1; min-width:160px; padding:6px; border:1px solid var(--gray-line); border-radius:5px; font-size:12px;">';
+        fuenteRow.querySelector('input').addEventListener('input', e => bl.fuenteUrl = e.target.value.trim());
+        bdiv.appendChild(fuenteRow);
+
         bl.celdas.forEach((c, ci) => {
           const cd = document.createElement('div');
           cd.className = 'ed-celda';
@@ -2345,7 +2364,7 @@ function renderEditor(){
       });
       const addB = document.createElement('button');
       addB.className = 'ed-btn'; addB.textContent = '+ Agregar bloque';
-      addB.addEventListener('click', () => { sec.bloques.push({celdas:[nuevaCelda()]}); sec._open = true; renderEditor(); });
+      addB.addEventListener('click', () => { sec.bloques.push({celdas:[nuevaCelda()], fuenteUrl:''}); sec._open = true; renderEditor(); });
       body.appendChild(addB);
       card.appendChild(body);
     }
@@ -2594,7 +2613,7 @@ function serializeDiapositivas(){
         let any = false;
         sec.bloques.forEach((bl, bi) => bl.celdas.forEach((c, ci) => {
           any = true;
-          aoa.push([hoja, sec.titulo, orden, 'bloques', act, '', bi+1, ci+1, c.contenido, c.titulo, c.detalle, c.cifra, c.fondo, c.imagen, c.ajuste]);
+          aoa.push([hoja, sec.titulo, orden, 'bloques', act, bl.fuenteUrl||'', bi+1, ci+1, c.contenido, c.titulo, c.detalle, c.cifra, c.fondo, c.imagen, c.ajuste]);
         }));
         if(!any) aoa.push([hoja, sec.titulo, orden, 'bloques', act, '', '', '', '', '', '', '', '', '', '']);
       } else if(sec.tipo === 'subportada'){
