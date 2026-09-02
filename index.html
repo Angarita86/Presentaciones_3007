@@ -1835,10 +1835,26 @@ function buildGenericTableSlide(sec, idx){
   return slide;
 }
 function buildSectionElement(sec, idx, secArr){
-  if(sec.tipo === 'bloques') return buildBloquesSlide(sec, idx);
-  if(sec.tipo === 'subportada') return buildSubportadaSlide(sec);
-  if(sec.tipo === 'tablamanual') return buildTablaManualSlide(sec, idx);
-  if(sec.tipo === 'grafico') return buildGraficoSlide(sec, idx, secArr);
+  if(sec.tipo === 'bloques'){
+    const el = buildBloquesSlide(sec, idx);
+    if(!sec.activa) el.style.display = 'none';
+    return el;
+  }
+  if(sec.tipo === 'subportada'){
+    const el = buildSubportadaSlide(sec);
+    if(!sec.activa) el.style.display = 'none';
+    return el;
+  }
+  if(sec.tipo === 'tablamanual'){
+    const el = buildTablaManualSlide(sec, idx);
+    if(!sec.activa) el.style.display = 'none';
+    return el;
+  }
+  if(sec.tipo === 'grafico'){
+    const el = buildGraficoSlide(sec, idx, secArr);
+    if(!sec.activa) el.style.display = 'none';
+    return el;
+  }
   if(sec.tipo === 'tabla'){
     const fixedId = FIXED_ID(sec);
     if(fixedId){
