@@ -312,6 +312,12 @@
   table.data thead.th-rojo th{ background:#C8102E; color:#fff; }
   table.data thead.th-gris th{ background:#C9CFD8; color:#22293A; }
   table.data thead.th-blanco th{ background:#fff; color:#22293A; border-bottom:2px solid var(--gray-line); }
+  .resumen-list{ max-height:440px; overflow-y:auto; padding-right:4px; }
+  .resumen-item{ padding:10px 2px; border-bottom:1px solid var(--gray-line); }
+  .resumen-item:last-child{ border-bottom:none; }
+  .resumen-head{ display:flex; align-items:center; gap:8px; }
+  .resumen-label{ font-weight:800; color:var(--navy); font-size:13.5px; letter-spacing:.2px; }
+  .resumen-badge{ background:var(--navy); color:#fff; border-radius:999px; min-width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center; font-size:11.5px; font-weight:700; padding:0 7px; flex-shrink:0; }
   /* ===== Editor de diseño ===== */
   .ed-section{ border:1px solid var(--gray-line); border-radius:8px; margin-bottom:14px; background:#fff; }
   .ed-head{ display:flex; align-items:center; gap:10px; padding:12px 14px; flex-wrap:wrap; }
@@ -2067,8 +2073,19 @@ const PALETA_GRAFICO = ['#1F3864','#2E5E8C','#3F87A6','#F2B705','#C8102E','#6B7A
 function truncateTxt(s, n){ s = (s==null?'':String(s)); return s.length > n ? s.slice(0, n-1) + '…' : s; }
 
 function tablaResumenHtml(items, colLabelName, colValueName){
-  const filas = items.map(it => '<tr><td>' + escHtml(it.label) + '</td><td>' + (typeof it.value === 'number' ? it.value.toLocaleString('es-CO') : escHtml(it.value)) + '</td></tr>').join('');
-  return '<div class="table-scroll"><table class="data"><thead class="th-azul"><tr><th>' + escHtml(colLabelName||'Etiqueta') + '</th><th>' + escHtml(colValueName||'Valor') + '</th></tr></thead><tbody>' + (filas || '<tr><td colspan="2">Sin datos</td></tr>') + '</tbody></table></div>';
+  const ordenados = items.slice().sort((a,b) => {
+    const av = typeof a.value === 'number' ? a.value : -Infinity;
+    const bv = typeof b.value === 'number' ? b.value : -Infinity;
+    return bv - av;
+  });
+  const filas = ordenados.map(it => {
+    const val = typeof it.value === 'number' ? it.value.toLocaleString('es-CO') : escHtml(it.value);
+    return '<div class="resumen-item"><div class="resumen-head">'
+      + '<span class="resumen-label">' + escHtml(it.label) + '</span>'
+      + '<span class="resumen-badge">' + val + '</span>'
+      + '</div></div>';
+  }).join('');
+  return '<div class="resumen-list">' + (filas || '<div class="resumen-item" style="color:#999; font-style:italic;">Sin datos</div>') + '</div>';
 }
 function envolverConResumen(contenidoHtml, tablaHtml, posicion){
   if(posicion !== 'izquierda' && posicion !== 'derecha') return contenidoHtml;
