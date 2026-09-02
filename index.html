@@ -304,6 +304,11 @@
   .bg-dorado{ background:#FDF4D7; border-color:#EFD98A; } .bg-dorado .bkpi, .bg-dorado .btitulo{ color:#8A6400; }
   .bg-rojo{ background:#FBEBED; border-color:#EFB9C0; } .bg-rojo .bkpi, .bg-rojo .btitulo{ color:var(--red); }
   .bg-gris{ background:#F3F5F8; }
+  table.data thead.th-azul th{ background:var(--navy); color:#fff; }
+  table.data thead.th-dorado th{ background:#F2B705; color:#5C4300; }
+  table.data thead.th-rojo th{ background:#C8102E; color:#fff; }
+  table.data thead.th-gris th{ background:#C9CFD8; color:#22293A; }
+  table.data thead.th-blanco th{ background:#fff; color:#22293A; border-bottom:2px solid var(--gray-line); }
   /* ===== Editor de diseño ===== */
   .ed-section{ border:1px solid var(--gray-line); border-radius:8px; margin-bottom:14px; background:#fff; }
   .ed-head{ display:flex; align-items:center; gap:10px; padding:12px 14px; flex-wrap:wrap; }
@@ -531,8 +536,9 @@
         convenio, normal — para introducir un subtema con la misma configuración visual que la portada principal),
         o "Tabla manual" (una tabla pequeña que no viene del Excel de datos, sino que se escribe directamente en el
         editor: al crearla defines cuántas filas y cuántas columnas necesitas, con un máximo de 50 filas y 12
-        columnas, y luego puedes seguir agregando o quitando filas y columnas, y editar el título de cada columna y
-        cada celda una por una). Al terminar, usa <b>"Descargar Excel actualizado"</b> y sube ese archivo
+        columnas, y luego puedes seguir agregando o quitando filas y columnas, editar el título de cada columna y
+        cada celda una por una, y elegir el color del encabezado entre los mismos cinco colores ya usados en los
+        bloques). Al terminar, usa <b>"Descargar Excel actualizado"</b> y sube ese archivo
         al repositorio como <code>data/informe.xlsx</code> para que el diseño quede permanente. Las imágenes se
         referencian por su nombre de archivo en la carpeta <code>fotos/</code>.</p>
       </div>
@@ -1713,7 +1719,7 @@ function parseDiapositivas(rows){
     if(!map[orden]){
       map[orden] = {
         titulo: (r['Seccion']||'')+'', tipo, activa,
-        fuente: ((r['Fuente']||'')+'').trim(), bloquesMap: {}, camposMap: {}, colsMap: {}, filasMap: {}
+        fuente: ((r['Fuente']||'')+'').trim(), bloquesMap: {}, camposMap: {}, colsMap: {}, filasMap: {}, colorEncabezado: 'azul'
       };
     }
     const sec = map[orden];
@@ -1738,6 +1744,7 @@ function parseDiapositivas(rows){
       const c = Number(r['Celda']) || 1;
       if(b === 0){
         sec.colsMap[c] = (r['Titulo']||'')+'';
+        if(r['Fondo']) sec.colorEncabezado = ((r['Fondo']||'azul')+'').trim().toLowerCase();
       } else if(b >= 1){
         if(!sec.filasMap[b]) sec.filasMap[b] = {};
         sec.filasMap[b][c] = (r['Detalle']||'')+'';
@@ -1762,7 +1769,7 @@ function parseDiapositivas(rows){
           for(let ci=1; ci<=nCols; ci++) arr.push(fila[ci] || '');
           return arr;
         });
-        return {titulo:s.titulo, tipo:s.tipo, activa:s.activa, fuente:s.fuente, columnas, filas};
+        return {titulo:s.titulo, tipo:s.tipo, activa:s.activa, fuente:s.fuente, columnas, filas, colorEncabezado: s.colorEncabezado || 'azul'};
       }
       const bloques = Object.keys(s.bloquesMap).map(Number).sort((a,b)=>a-b)
         .map(b => ({celdas: Object.keys(s.bloquesMap[b]).map(Number).sort((a,b)=>a-b).map(c => s.bloquesMap[b][c])}));
@@ -1876,7 +1883,7 @@ function buildTablaManualSlide(sec, idx){
   const cols = sec.columnas || [];
   const filas = sec.filas || [];
   let inner = '<div class="slide-eyebrow">Sección ' + idx + '</div><h2>' + (sec.titulo||'') + '</h2>';
-  inner += '<div class="table-scroll"><table class="data"><thead><tr>' +
+  inner += '<div class="table-scroll"><table class="data"><thead class="th-' + (sec.colorEncabezado||'azul') + '"><tr>' +
     cols.map(c => '<th>' + escHtml(c.titulo) + '</th>').join('') + '</tr></thead><tbody>' +
     (filas.length
       ? filas.map(f => '<tr>' + f.map(v => '<td>' + escHtml(v) + '</td>').join('') + '</tr>').join('')
@@ -2003,7 +2010,7 @@ function agregarElemento(){
       const nc = Math.min(Math.max(parseInt(document.getElementById('tmCols').value,10)||1, 1), 12);
       const columnas = Array.from({length:nc}, (_,i) => ({titulo:'Columna ' + (i+1)}));
       const filas = Array.from({length:nf}, () => Array.from({length:nc}, () => ''));
-      arr.push({titulo:'Nueva tabla', tipo:'tablamanual', activa:true, fuente:'', columnas, filas, _open:true});
+      arr.push({titulo:'Nueva tabla', tipo:'tablamanual', activa:true, fuente:'', columnas, filas, colorEncabezado:'azul', _open:true});
     } else {
       arr.push({titulo:'Nueva sección', tipo:'bloques', activa:true, fuente:'', bloques:[{celdas:[nuevaCelda()]}], _open:true});
     }
@@ -2228,6 +2235,18 @@ function renderEditor(){
       const body = document.createElement('div');
       body.className = 'ed-body';
       const cols = sec.columnas, filas = sec.filas;
+      if(!sec.colorEncabezado) sec.colorEncabezado = 'azul';
+
+      const colorRow = document.createElement('div');
+      colorRow.style.cssText = 'display:flex; align-items:center; gap:8px; margin-bottom:10px;';
+      colorRow.innerHTML = '<label style="font-size:12px; color:var(--muted);">Color del encabezado</label>'
+        + '<div class="swatches">' + FONDOS.map(v => '<span class="swatch sw-' + v + (sec.colorEncabezado===v?' sel':'') + '" data-v="' + v + '" title="' + v + '"></span>').join('') + '</div>';
+      colorRow.querySelectorAll('.swatch').forEach(sw => sw.addEventListener('click', () => {
+        sec.colorEncabezado = sw.dataset.v;
+        colorRow.querySelectorAll('.swatch').forEach(x => x.classList.remove('sel'));
+        sw.classList.add('sel');
+      }));
+      body.appendChild(colorRow);
 
       const headRow = document.createElement('div');
       headRow.style.cssText = 'display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap; align-items:center;';
@@ -2313,7 +2332,7 @@ function serializeDiapositivas(){
         let any = false;
         (sec.columnas||[]).forEach((c, ci) => {
           any = true;
-          aoa.push([hoja, sec.titulo, orden, 'tablamanual', act, '', 0, ci+1, '', c.titulo||'', '', '', '', '', '']);
+          aoa.push([hoja, sec.titulo, orden, 'tablamanual', act, '', 0, ci+1, '', c.titulo||'', '', '', sec.colorEncabezado||'azul', '', '']);
         });
         (sec.filas||[]).forEach((fila, ri) => {
           fila.forEach((val, ci) => {

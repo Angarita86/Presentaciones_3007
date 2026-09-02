@@ -85,10 +85,11 @@ y `Ajuste` (`recortar` · `completa`).
   desplegable junto al botón "+ Agregar sección".
 - **Tabla manual**: sección de tipo `Tipo=tablamanual`, para una tabla pequeña escrita directamente en el editor,
   sin vincularla a ninguna hoja del Excel de datos. Se define el número de filas y de columnas al crearla (máximo
-  50 filas y 12 columnas) y luego se pueden seguir agregando o quitando filas y columnas desde el editor. En el
-  Excel, la fila con `Bloque=0` define los encabezados de columna (`Celda`=número de columna, `Titulo`=texto del
-  encabezado); las filas con `Bloque=1` en adelante son los datos (`Bloque`=número de fila, `Celda`=número de
-  columna, `Detalle`=valor de esa celda).
+  50 filas y 12 columnas) y luego se pueden seguir agregando o quitando filas y columnas desde el editor, así como
+  elegir el color del encabezado (blanco, azul, dorado, rojo o gris, los mismos usados en el fondo de los bloques).
+  En el Excel, la fila con `Bloque=0` define los encabezados de columna (`Celda`=número de columna, `Titulo`=texto
+  del encabezado, `Fondo`=color del encabezado); las filas con `Bloque=1` en adelante son los datos (`Bloque`=número
+  de fila, `Celda`=número de columna, `Detalle`=valor de esa celda).
 - **Casos Emblemáticos**: cada caso se define con una fila `Tipo=hoja` (nombre en `Seccion`, estado en `Activa`)
   y sus secciones (bloques, subportadas o tablas manuales) con `Hoja=Caso N`. Los casos inactivos no aparecen en el menú.
 
