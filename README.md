@@ -70,7 +70,7 @@ constante `EXPECTED` en `index.html`.
 ### Hoja `Diapositivas` (estructura)
 
 Columnas: `Hoja` (`Portada` · `Informe` · `Caso 1` a `Caso 5`), `Seccion`, `Orden`,
-`Tipo` (`tabla` · `contactabilidad` · `mapa` · `bloques` · `subportada` · `campo` para portada · `hoja` para definir un caso),
+`Tipo` (`tabla` · `contactabilidad` · `mapa` · `bloques` · `subportada` · `tablamanual` · `campo` para portada · `hoja` para definir un caso),
 `Activa` (SI/NO), `Fuente` (para tipo tabla: nombre de la hoja de datos), y para tipo `bloques` una fila por celda con:
 `Bloque` (1-4), `Celda` (1-4), `Contenido` (`texto` · `imagen` · `imagen+texto`), `Titulo`, `Detalle`,
 `Cifra`, `Fondo` (`blanco` · `azul` · `dorado` · `rojo` · `gris`), `Imagen` (nombre de archivo en `fotos/` o `imagenes/`)
@@ -83,8 +83,14 @@ y `Ajuste` (`recortar` · `completa`).
   `Contenido` para el estilo (mismos valores que la Portada), `Detalle` para el texto y `Cifra` (SI/NO) para
   mostrar u ocultar ese campo puntual. Se crea desde **Diseño de hojas**, eligiendo "Subportada" en el
   desplegable junto al botón "+ Agregar sección".
+- **Tabla manual**: sección de tipo `Tipo=tablamanual`, para una tabla pequeña escrita directamente en el editor,
+  sin vincularla a ninguna hoja del Excel de datos. Se define el número de filas y de columnas al crearla (máximo
+  50 filas y 12 columnas) y luego se pueden seguir agregando o quitando filas y columnas desde el editor. En el
+  Excel, la fila con `Bloque=0` define los encabezados de columna (`Celda`=número de columna, `Titulo`=texto del
+  encabezado); las filas con `Bloque=1` en adelante son los datos (`Bloque`=número de fila, `Celda`=número de
+  columna, `Detalle`=valor de esa celda).
 - **Casos Emblemáticos**: cada caso se define con una fila `Tipo=hoja` (nombre en `Seccion`, estado en `Activa`)
-  y sus secciones de bloques o subportadas con `Hoja=Caso N`. Los casos inactivos no aparecen en el menú.
+  y sus secciones (bloques, subportadas o tablas manuales) con `Hoja=Caso N`. Los casos inactivos no aparecen en el menú.
 
 ## Guardar directo desde el informe (token de GitHub)
 

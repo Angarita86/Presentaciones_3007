@@ -527,9 +527,12 @@
         <b>Configuración → Diseño de hojas</b>: activar/desactivar secciones, reordenarlas (▲▼), y elegir en el
         desplegable qué tipo de sección agregar — "Sección de bloques" (de 1 a 4 bloques horizontales, cada uno con
         1 a 4 celdas de texto, imagen o imagen+texto, con título, detalle, cifra destacada, fondo de color y ajuste
-        de imagen) o "Subportada" (los mismos campos y estilos de la Portada — eyebrow, título, subtítulo, etiqueta,
-        convenio, normal — para introducir un subtema dentro del Informe o de un Caso, con la misma configuración
-        visual que la portada principal). Al terminar, usa <b>"Descargar Excel actualizado"</b> y sube ese archivo
+        de imagen), "Subportada" (los mismos campos y estilos de la Portada — eyebrow, título, subtítulo, etiqueta,
+        convenio, normal — para introducir un subtema con la misma configuración visual que la portada principal),
+        o "Tabla manual" (una tabla pequeña que no viene del Excel de datos, sino que se escribe directamente en el
+        editor: al crearla defines cuántas filas y cuántas columnas necesitas, con un máximo de 50 filas y 12
+        columnas, y luego puedes seguir agregando o quitando filas y columnas, y editar el título de cada columna y
+        cada celda una por una). Al terminar, usa <b>"Descargar Excel actualizado"</b> y sube ese archivo
         al repositorio como <code>data/informe.xlsx</code> para que el diseño quede permanente. Las imágenes se
         referencian por su nombre de archivo en la carpeta <code>fotos/</code>.</p>
       </div>
@@ -752,7 +755,16 @@
         <select id="selTipoSeccion" style="padding:9px 10px; border:1px solid var(--gray-line); border-radius:5px; font-family:inherit; font-size:13px; display:none;">
           <option value="bloques">Sección de bloques</option>
           <option value="subportada">Subportada (mismo estilo de la portada)</option>
+          <option value="tablamanual">Tabla manual (sin vincular a Excel)</option>
         </select>
+        <span id="tablaManualDims" style="display:none; align-items:center; gap:10px;">
+          <label style="font-size:12px; color:var(--muted);">Filas
+            <input type="number" id="tmFilas" min="1" max="50" value="3" style="width:56px; padding:6px; border:1px solid var(--gray-line); border-radius:5px; font-family:inherit;">
+          </label>
+          <label style="font-size:12px; color:var(--muted);">Columnas
+            <input type="number" id="tmCols" min="1" max="12" value="3" style="width:56px; padding:6px; border:1px solid var(--gray-line); border-radius:5px; font-family:inherit;">
+          </label>
+        </span>
         <button class="upload-btn" style="border:none; font-family:inherit;" onclick="agregarElemento()" id="btnAgregarElem">+ Agregar sección de bloques</button>
         <button class="upload-btn" style="border:none; font-family:inherit; background:var(--gold); color:#3a2c00;" onclick="renderAll(); alert('Cambios aplicados a la vista.');">Aplicar cambios</button>
         <button class="upload-btn" style="border:none; font-family:inherit; background:var(--red);" onclick="descargarExcelActualizado()">Descargar Excel actualizado</button>
@@ -1701,7 +1713,7 @@ function parseDiapositivas(rows){
     if(!map[orden]){
       map[orden] = {
         titulo: (r['Seccion']||'')+'', tipo, activa,
-        fuente: ((r['Fuente']||'')+'').trim(), bloquesMap: {}, camposMap: {}
+        fuente: ((r['Fuente']||'')+'').trim(), bloquesMap: {}, camposMap: {}, colsMap: {}, filasMap: {}
       };
     }
     const sec = map[orden];
@@ -1721,6 +1733,15 @@ function parseDiapositivas(rows){
         texto: (r['Detalle']||'')+'',
         activa: ((r['Cifra']||'SI')+'').trim().toUpperCase() !== 'NO'
       };
+    } else if(sec.tipo === 'tablamanual'){
+      const b = Number(r['Bloque']);
+      const c = Number(r['Celda']) || 1;
+      if(b === 0){
+        sec.colsMap[c] = (r['Titulo']||'')+'';
+      } else if(b >= 1){
+        if(!sec.filasMap[b]) sec.filasMap[b] = {};
+        sec.filasMap[b][c] = (r['Detalle']||'')+'';
+      }
     }
   }
   function finish(map){
@@ -1729,6 +1750,19 @@ function parseDiapositivas(rows){
       if(s.tipo === 'subportada'){
         const campos = Object.keys(s.camposMap).map(Number).sort((a,b)=>a-b).map(i => s.camposMap[i]);
         return {titulo:s.titulo, tipo:s.tipo, activa:s.activa, fuente:s.fuente, campos: campos.length ? campos : defaultPortada()};
+      }
+      if(s.tipo === 'tablamanual'){
+        const colIdxs = Object.keys(s.colsMap).map(Number).sort((a,b)=>a-b);
+        const columnas = colIdxs.length ? colIdxs.map(i => ({titulo: s.colsMap[i]})) : [{titulo:'Columna 1'}];
+        const nCols = columnas.length;
+        const rowIdxs = Object.keys(s.filasMap).map(Number).sort((a,b)=>a-b);
+        const filas = rowIdxs.map(ri => {
+          const fila = s.filasMap[ri];
+          const arr = [];
+          for(let ci=1; ci<=nCols; ci++) arr.push(fila[ci] || '');
+          return arr;
+        });
+        return {titulo:s.titulo, tipo:s.tipo, activa:s.activa, fuente:s.fuente, columnas, filas};
       }
       const bloques = Object.keys(s.bloquesMap).map(Number).sort((a,b)=>a-b)
         .map(b => ({celdas: Object.keys(s.bloquesMap[b]).map(Number).sort((a,b)=>a-b).map(c => s.bloquesMap[b][c])}));
@@ -1782,6 +1816,7 @@ function buildGenericTableSlide(sec, idx){
 function buildSectionElement(sec, idx){
   if(sec.tipo === 'bloques') return buildBloquesSlide(sec, idx);
   if(sec.tipo === 'subportada') return buildSubportadaSlide(sec);
+  if(sec.tipo === 'tablamanual') return buildTablaManualSlide(sec, idx);
   if(sec.tipo === 'tabla'){
     const fixedId = FIXED_ID(sec);
     if(fixedId){
@@ -1828,6 +1863,25 @@ function buildBloquesSlide(sec, idx){
     });
     inner += '</div>';
   });
+  slide.innerHTML = inner;
+  const f = document.createElement('img');
+  f.src = FOOTER_LOGO_SRC; f.className = 'slide-footer-logo'; f.alt = '';
+  slide.appendChild(f);
+  return slide;
+}
+
+function buildTablaManualSlide(sec, idx){
+  const slide = document.createElement('div');
+  slide.className = 'slide custom-slide';
+  const cols = sec.columnas || [];
+  const filas = sec.filas || [];
+  let inner = '<div class="slide-eyebrow">Sección ' + idx + '</div><h2>' + (sec.titulo||'') + '</h2>';
+  inner += '<div class="table-scroll"><table class="data"><thead><tr>' +
+    cols.map(c => '<th>' + escHtml(c.titulo) + '</th>').join('') + '</tr></thead><tbody>' +
+    (filas.length
+      ? filas.map(f => '<tr>' + f.map(v => '<td>' + escHtml(v) + '</td>').join('') + '</tr>').join('')
+      : '<tr class="empty-row"><td colspan="' + cols.length + '">Sin filas</td></tr>') +
+    '</tbody></table></div>';
   slide.innerHTML = inner;
   const f = document.createElement('img');
   f.src = FOOTER_LOGO_SRC; f.className = 'slide-footer-logo'; f.alt = '';
@@ -1893,7 +1947,7 @@ function renderCasos(){
     page.querySelectorAll('.custom-slide').forEach(el => el.remove());
     let idx = 0;
     caso.secciones.forEach(sec => {
-      if(sec.tipo !== 'bloques' && sec.tipo !== 'tabla' && sec.tipo !== 'subportada') return;
+      if(sec.tipo !== 'bloques' && sec.tipo !== 'tabla' && sec.tipo !== 'subportada' && sec.tipo !== 'tablamanual') return;
       idx++;
       const el = buildSectionElement(sec, idx);
       if(!el) return;
@@ -1944,6 +1998,12 @@ function agregarElemento(){
     const tipo = document.getElementById('selTipoSeccion').value;
     if(tipo === 'subportada'){
       arr.push({titulo:'Nueva subportada', tipo:'subportada', activa:true, fuente:'', campos: defaultPortada(), _open:true});
+    } else if(tipo === 'tablamanual'){
+      const nf = Math.min(Math.max(parseInt(document.getElementById('tmFilas').value,10)||1, 1), 50);
+      const nc = Math.min(Math.max(parseInt(document.getElementById('tmCols').value,10)||1, 1), 12);
+      const columnas = Array.from({length:nc}, (_,i) => ({titulo:'Columna ' + (i+1)}));
+      const filas = Array.from({length:nf}, () => Array.from({length:nc}, () => ''));
+      arr.push({titulo:'Nueva tabla', tipo:'tablamanual', activa:true, fuente:'', columnas, filas, _open:true});
     } else {
       arr.push({titulo:'Nueva sección', tipo:'bloques', activa:true, fuente:'', bloques:[{celdas:[nuevaCelda()]}], _open:true});
     }
@@ -1968,6 +2028,12 @@ function renderHojaBar(){
   bar.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { ED_HOJA = b.dataset.hoja; renderEditor(); }));
   document.getElementById('btnAgregarElem').textContent = ED_HOJA==='portada' ? '+ Agregar campo de texto' : '+ Agregar sección';
   document.getElementById('selTipoSeccion').style.display = ED_HOJA==='portada' ? 'none' : '';
+  actualizarDimsVisibles();
+}
+function actualizarDimsVisibles(){
+  const sel = document.getElementById('selTipoSeccion');
+  const dims = document.getElementById('tablaManualDims');
+  dims.style.display = (ED_HOJA!=='portada' && sel.value==='tablamanual') ? 'inline-flex' : 'none';
 }
 
 function renderCasoHead(){
@@ -2025,8 +2091,8 @@ function renderEditor(){
   secs.forEach((sec, si) => {
     const card = document.createElement('div');
     card.className = 'ed-section' + (sec._open ? ' open' : '');
-    const tipoLabel = sec.tipo === 'bloques' ? 'BLOQUES' : sec.tipo === 'tabla' ? 'TABLA · ' + sec.fuente : sec.tipo.toUpperCase();
-    const tituloEditable = sec.tipo === 'bloques' || sec.tipo === 'subportada';
+    const tipoLabel = sec.tipo === 'bloques' ? 'BLOQUES' : sec.tipo === 'tabla' ? 'TABLA · ' + sec.fuente : sec.tipo === 'tablamanual' ? 'TABLA MANUAL' : sec.tipo.toUpperCase();
+    const tituloEditable = sec.tipo === 'bloques' || sec.tipo === 'subportada' || sec.tipo === 'tablamanual';
     const head = document.createElement('div');
     head.className = 'ed-head';
     head.innerHTML = '<button class="ed-btn exp">' + (sec._open ? '▾' : '▸') + '</button>'
@@ -2034,7 +2100,7 @@ function renderEditor(){
       + '<span class="ed-tipo">' + tipoLabel + '</span>'
       + '<input type="text" value="' + (sec.titulo||'').replace(/"/g,'&quot;') + '"' + (tituloEditable ? '' : ' disabled') + '>'
       + '<button class="ed-btn">▲</button><button class="ed-btn">▼</button>'
-      + ((sec.tipo === 'bloques' || sec.tipo === 'tabla' || sec.tipo === 'subportada') ? '<button class="ed-btn danger">Eliminar</button>' : '');
+      + ((sec.tipo === 'bloques' || sec.tipo === 'tabla' || sec.tipo === 'subportada' || sec.tipo === 'tablamanual') ? '<button class="ed-btn danger">Eliminar</button>' : '');
     card.appendChild(head);
     const hb = head.querySelectorAll('button, input');
     const expB = head.querySelector('.exp');
@@ -2157,6 +2223,64 @@ function renderEditor(){
       body.appendChild(addC);
       card.appendChild(body);
     }
+
+    if(sec.tipo === 'tablamanual'){
+      const body = document.createElement('div');
+      body.className = 'ed-body';
+      const cols = sec.columnas, filas = sec.filas;
+
+      const headRow = document.createElement('div');
+      headRow.style.cssText = 'display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap; align-items:center;';
+      cols.forEach((c) => {
+        const wrap = document.createElement('span');
+        wrap.style.cssText = 'display:inline-flex; align-items:center; gap:3px;';
+        wrap.innerHTML = '<input type="text" value="' + (c.titulo||'').replace(/"/g,'&quot;') + '" style="width:110px; padding:6px; border:1px solid var(--gray-line); border-radius:5px; font-size:12px; font-weight:700;">'
+          + (cols.length>1 ? '<button class="ed-btn danger" title="Eliminar columna" style="padding:2px 7px;">✕</button>' : '');
+        wrap.querySelector('input').addEventListener('input', e => c.titulo = e.target.value);
+        const delBtn = wrap.querySelector('button');
+        if(delBtn) delBtn.addEventListener('click', () => {
+          const idx = cols.indexOf(c);
+          cols.splice(idx,1);
+          filas.forEach(f => f.splice(idx,1));
+          sec._open = true; renderEditor();
+        });
+        headRow.appendChild(wrap);
+      });
+      const addColBtn = document.createElement('button');
+      addColBtn.className = 'ed-btn'; addColBtn.textContent = '+ Columna';
+      addColBtn.addEventListener('click', () => {
+        cols.push({titulo:'Columna ' + (cols.length+1)});
+        filas.forEach(f => f.push(''));
+        sec._open = true; renderEditor();
+      });
+      headRow.appendChild(addColBtn);
+      body.appendChild(headRow);
+
+      filas.forEach((fila, ri) => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex; gap:6px; margin-bottom:6px; flex-wrap:wrap; align-items:center;';
+        fila.forEach((val, ci) => {
+          const inp = document.createElement('input');
+          inp.type = 'text'; inp.value = val || '';
+          inp.style.cssText = 'width:110px; padding:6px; border:1px solid var(--gray-line); border-radius:5px; font-size:12px;';
+          inp.addEventListener('input', e => fila[ci] = e.target.value);
+          row.appendChild(inp);
+        });
+        const delRowBtn = document.createElement('button');
+        delRowBtn.className = 'ed-btn danger'; delRowBtn.textContent = '✕';
+        delRowBtn.title = 'Eliminar fila';
+        delRowBtn.addEventListener('click', () => { filas.splice(ri,1); sec._open = true; renderEditor(); });
+        row.appendChild(delRowBtn);
+        body.appendChild(row);
+      });
+
+      const addRowBtn = document.createElement('button');
+      addRowBtn.className = 'ed-btn'; addRowBtn.textContent = '+ Agregar fila';
+      addRowBtn.addEventListener('click', () => { filas.push(cols.map(()=>'')); sec._open = true; renderEditor(); });
+      body.appendChild(addRowBtn);
+
+      card.appendChild(body);
+    }
     box.appendChild(card);
   });
 }
@@ -2185,6 +2309,19 @@ function serializeDiapositivas(){
           aoa.push([hoja, sec.titulo, orden, 'subportada', act, '', ci+1, '', c.estilo, '', c.texto, c.activa?'SI':'NO', '', '', '']);
         });
         if(!any) aoa.push([hoja, sec.titulo, orden, 'subportada', act, '', '', '', '', '', '', '', '', '', '']);
+      } else if(sec.tipo === 'tablamanual'){
+        let any = false;
+        (sec.columnas||[]).forEach((c, ci) => {
+          any = true;
+          aoa.push([hoja, sec.titulo, orden, 'tablamanual', act, '', 0, ci+1, '', c.titulo||'', '', '', '', '', '']);
+        });
+        (sec.filas||[]).forEach((fila, ri) => {
+          fila.forEach((val, ci) => {
+            any = true;
+            aoa.push([hoja, sec.titulo, orden, 'tablamanual', act, '', ri+1, ci+1, '', '', val||'', '', '', '', '']);
+          });
+        });
+        if(!any) aoa.push([hoja, sec.titulo, orden, 'tablamanual', act, '', '', '', '', '', '', '', '', '', '']);
       } else {
         aoa.push([hoja, sec.titulo, orden, sec.tipo, act, sec.fuente||'', '', '', '', '', '', '', '', '', '']);
       }
@@ -2364,6 +2501,7 @@ window.onWorkbookLoaded = function(wb){
 };
 
 /* estado inicial */
+document.getElementById('selTipoSeccion').addEventListener('change', actualizarDimsVisibles);
 renderAll();
 renderEditor();
 </script>
