@@ -544,7 +544,11 @@
         bloques), o "Gráfico de barras o de torta" (dibuja un gráfico a partir de una hoja del Excel de datos, o a
         partir de una tabla manual que ya hayas creado en la misma hoja del Informe o del Caso: eliges el origen,
         luego la hoja o la tabla, el tipo de gráfico, la columna que va como etiqueta y la columna numérica que se
-        grafica; si una etiqueta se repite, sus valores se suman automáticamente). Al terminar, usa
+        grafica; si una etiqueta se repite, sus valores se suman automáticamente), o "Mapa de Colombia por
+        departamento" (colorea el mapa de Colombia según los valores de una hoja del Excel o de una tabla manual:
+        eliges el origen, la columna que trae el nombre del departamento y la columna numérica que se representa;
+        no hace falta que el nombre del departamento coincida en mayúsculas ni tildes, y si alguno no se reconoce
+        se avisa debajo del mapa). Al terminar, usa
         <b>"Descargar Excel actualizado"</b> y sube ese archivo
         al repositorio como <code>data/informe.xlsx</code> para que el diseño quede permanente. Las imágenes se
         referencian por su nombre de archivo en la carpeta <code>fotos/</code>.</p>
@@ -770,6 +774,7 @@
           <option value="subportada">Subportada (mismo estilo de la portada)</option>
           <option value="tablamanual">Tabla manual (sin vincular a Excel)</option>
           <option value="grafico">Gráfico de barras o de torta</option>
+          <option value="mapadatos">Mapa de Colombia por departamento</option>
         </select>
         <span id="tablaManualDims" style="display:none; align-items:center; gap:10px;">
           <label style="font-size:12px; color:var(--muted);">Filas
@@ -1182,6 +1187,114 @@ const svg = d3.select("#mapSvg");
 const mapWidth = 520, mapHeight = 620;
 const projection = d3.geoMercator().fitSize([mapWidth, mapHeight], GEOJSON);
 const geoPath = d3.geoPath().projection(projection);
+
+/* ============ MAPAS DE DATOS (nuevo tipo de sección, reutiliza el contorno de Colombia) ============ */
+function normalizarDepto(s){
+  return (s||'').toString().trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+}
+const ALIAS_DEPTOS = {
+  'BOGOTA': 'BOGOTA, D.C.',
+  'BOGOTA DC': 'BOGOTA, D.C.',
+  'BOGOTA D.C.': 'BOGOTA, D.C.',
+  'BOGOTA D C': 'BOGOTA, D.C.',
+  'SAN ANDRES': 'ARCHIPIELAGO DE SAN ANDRES, PROVIDENCIA Y SANTA CATALINA',
+  'SAN ANDRES Y PROVIDENCIA': 'ARCHIPIELAGO DE SAN ANDRES, PROVIDENCIA Y SANTA CATALINA',
+  'SAN ANDRES PROVIDENCIA Y SANTA CATALINA': 'ARCHIPIELAGO DE SAN ANDRES, PROVIDENCIA Y SANTA CATALINA',
+  'ARCHIPIELAGO DE SAN ANDRES': 'ARCHIPIELAGO DE SAN ANDRES, PROVIDENCIA Y SANTA CATALINA'
+};
+function normalizarDeptoConAlias(s){
+  const base = normalizarDepto(s);
+  return normalizarDepto(ALIAS_DEPTOS[base] || base);
+}
+function colorEscalaMapa(value, maxValue){
+  if(!value || !maxValue) return '#E8ECF3';
+  const t = Math.min(1, Math.max(0.18, value / maxValue));
+  return d3.interpolateBlues(t);
+}
+function svgMapaDeptos(dataMap){
+  const maxVal = Math.max(1, ...Array.from(dataMap.values()).map(d => d.valor));
+  let paths = '';
+  GEOJSON.features.forEach(f => {
+    const norm = normalizarDepto(f.properties.name);
+    const entry = dataMap.get(norm);
+    const val = entry ? entry.valor : 0;
+    const fill = colorEscalaMapa(val, maxVal);
+    const d = geoPath(f);
+    const label = escHtml(f.properties.name) + (entry ? (': ' + val.toLocaleString('es-CO')) : ': sin datos');
+    paths += '<path d="' + d + '" fill="' + fill + '" stroke="#fff" stroke-width="0.6"><title>' + label + '</title></path>';
+  });
+  return '<svg viewBox="0 0 ' + mapWidth + ' ' + mapHeight + '" width="100%" style="max-width:380px; display:block; margin:10px auto;">' + paths + '</svg>';
+}
+function buildMapaDatosSlide(sec, idx, secArr){
+  const slide = document.createElement('div');
+  slide.className = 'slide custom-slide';
+  let inner = '<div class="slide-eyebrow">Sección ' + idx + '</div><h2>' + (sec.titulo||'') + '</h2>';
+  const origen = sec.origen || 'excel';
+  let rows = null, mensaje = null;
+
+  if(origen === 'tablamanual'){
+    if(!sec.tablaRef){
+      mensaje = 'Selecciona la tabla manual y las columnas en Configuración → Diseño de hojas.';
+    } else {
+      const tabla = (secArr||[]).find(s => s.tipo === 'tablamanual' && s.titulo === sec.tablaRef);
+      if(!tabla){
+        mensaje = '⚠️ No se encontró la tabla manual "' + escHtml(sec.tablaRef) + '" en esta hoja. Puede que haya sido renombrada o eliminada.';
+      } else if(!sec.colDepto || !sec.colValor){
+        mensaje = 'Selecciona la columna de departamento y la de valor en Configuración → Diseño de hojas.';
+      } else {
+        const nombresCols = tabla.columnas.map(c => c.titulo);
+        const iDep = nombresCols.indexOf(sec.colDepto), iVal = nombresCols.indexOf(sec.colValor);
+        if(iDep === -1 || iVal === -1){
+          mensaje = 'Las columnas seleccionadas ya no existen en esa tabla. Vuelve a elegirlas en el editor.';
+        } else {
+          rows = tabla.filas.map(f => ({ [sec.colDepto]: f[iDep], [sec.colValor]: f[iVal] }));
+        }
+      }
+    }
+  } else {
+    if(!sec.fuente || !sec.colDepto || !sec.colValor){
+      mensaje = 'Selecciona la hoja de datos y las columnas de departamento y valor en Configuración → Diseño de hojas.';
+    } else {
+      const wb = LOADED_WB;
+      rows = wb ? sheetToRows(wb, sec.fuente) : null;
+      if(!rows) mensaje = '⚠️ No se encontró la hoja "' + escHtml(sec.fuente) + '" en el Excel cargado.';
+      else if(!rows.length) mensaje = 'La hoja "' + escHtml(sec.fuente) + '" no tiene filas de datos.';
+    }
+  }
+
+  if(mensaje){
+    inner += '<p style="color:' + (mensaje.indexOf('⚠️')===0?'#c8102e':'#999') + '; font-style:' + (mensaje.indexOf('⚠️')===0?'normal':'italic') + '; font-size:13px;">' + mensaje + '</p>';
+  } else {
+    const dataMap = new Map();
+    const noReconocidos = new Set();
+    rows.forEach(r => {
+      const nombreOriginal = (r[sec.colDepto]==null ? '' : String(r[sec.colDepto])).trim();
+      if(!nombreOriginal) return;
+      const raw = r[sec.colValor];
+      const val = (typeof raw === 'number') ? raw : (parseFloat(String(raw==null?'':raw).replace(',','.')) || 0);
+      const norm = normalizarDeptoConAlias(nombreOriginal);
+      const existeEnMapa = GEOJSON.features.some(f => normalizarDepto(f.properties.name) === norm);
+      if(!existeEnMapa) noReconocidos.add(nombreOriginal);
+      const prev = dataMap.get(norm) || {valor:0};
+      dataMap.set(norm, {valor: prev.valor + val});
+    });
+    if(!dataMap.size){
+      inner += '<p style="color:#999; font-style:italic;">No hay datos para ubicar en el mapa con las columnas seleccionadas.</p>';
+    } else if(typeof d3 === 'undefined' || !d3.interpolateBlues){
+      inner += '<p style="color:#c8102e; font-size:13px;">⚠️ No se pudo cargar la librería del mapa (D3). Verifica la conexión a internet y vuelve a intentar.</p>';
+    } else {
+      inner += svgMapaDeptos(dataMap);
+      if(noReconocidos.size){
+        inner += '<p style="font-size:11px; color:#999; margin-top:6px; text-align:center;">No se pudo ubicar en el mapa: ' + Array.from(noReconocidos).map(escHtml).join(', ') + '.</p>';
+      }
+    }
+  }
+  slide.innerHTML = inner;
+  const f = document.createElement('img');
+  f.src = FOOTER_LOGO_SRC; f.className = 'slide-footer-logo'; f.alt = '';
+  slide.appendChild(f);
+  return slide;
+}
 const tooltip = document.getElementById('tooltip');
 
 function colorFor(count){
@@ -1764,6 +1877,11 @@ function parseDiapositivas(rows){
       sec.colValor = (r['Detalle']||'')+'';
       sec.origen = ((r['Cifra']||'excel')+'').trim().toLowerCase() === 'tablamanual' ? 'tablamanual' : 'excel';
       sec.tablaRef = (r['Fondo']||'')+'';
+    } else if(sec.tipo === 'mapadatos'){
+      sec.colDepto = (r['Titulo']||'')+'';
+      sec.colValor = (r['Detalle']||'')+'';
+      sec.origen = ((r['Cifra']||'excel')+'').trim().toLowerCase() === 'tablamanual' ? 'tablamanual' : 'excel';
+      sec.tablaRef = (r['Fondo']||'')+'';
     }
   }
   function finish(map){
@@ -1788,6 +1906,9 @@ function parseDiapositivas(rows){
       }
       if(s.tipo === 'grafico'){
         return {titulo:s.titulo, tipo:s.tipo, activa:s.activa, fuente:s.fuente, tipoGrafico: s.tipoGrafico||'barras', colEtiqueta: s.colEtiqueta||'', colValor: s.colValor||'', origen: s.origen||'excel', tablaRef: s.tablaRef||''};
+      }
+      if(s.tipo === 'mapadatos'){
+        return {titulo:s.titulo, tipo:s.tipo, activa:s.activa, fuente:s.fuente, colDepto: s.colDepto||'', colValor: s.colValor||'', origen: s.origen||'excel', tablaRef: s.tablaRef||''};
       }
       const bloques = Object.keys(s.bloquesMap).map(Number).sort((a,b)=>a-b)
         .map(b => ({
@@ -1859,6 +1980,11 @@ function buildSectionElement(sec, idx, secArr){
   }
   if(sec.tipo === 'grafico'){
     const el = buildGraficoSlide(sec, idx, secArr);
+    if(!sec.activa) el.style.display = 'none';
+    return el;
+  }
+  if(sec.tipo === 'mapadatos'){
+    const el = buildMapaDatosSlide(sec, idx, secArr);
     if(!sec.activa) el.style.display = 'none';
     return el;
   }
@@ -2114,7 +2240,7 @@ function renderCasos(){
     page.querySelectorAll('.custom-slide').forEach(el => el.remove());
     let idx = 0;
     caso.secciones.forEach(sec => {
-      if(sec.tipo !== 'bloques' && sec.tipo !== 'tabla' && sec.tipo !== 'subportada' && sec.tipo !== 'tablamanual' && sec.tipo !== 'grafico') return;
+      if(sec.tipo !== 'bloques' && sec.tipo !== 'tabla' && sec.tipo !== 'subportada' && sec.tipo !== 'tablamanual' && sec.tipo !== 'grafico' && sec.tipo !== 'mapadatos') return;
       idx++;
       const el = buildSectionElement(sec, idx, caso.secciones);
       if(!el) return;
@@ -2173,6 +2299,8 @@ function agregarElemento(){
       arr.push({titulo:'Nueva tabla', tipo:'tablamanual', activa:true, fuente:'', columnas, filas, colorEncabezado:'azul', _open:true});
     } else if(tipo === 'grafico'){
       arr.push({titulo:'Nuevo gráfico', tipo:'grafico', activa:true, fuente:'', tipoGrafico:'barras', origen:'excel', tablaRef:'', colEtiqueta:'', colValor:'', _open:true});
+    } else if(tipo === 'mapadatos'){
+      arr.push({titulo:'Nuevo mapa', tipo:'mapadatos', activa:true, fuente:'', origen:'excel', tablaRef:'', colDepto:'', colValor:'', _open:true});
     } else {
       arr.push({titulo:'Nueva sección', tipo:'bloques', activa:true, fuente:'', bloques:[{celdas:[nuevaCelda()], fuenteUrl:''}], _open:true});
     }
@@ -2260,8 +2388,8 @@ function renderEditor(){
   secs.forEach((sec, si) => {
     const card = document.createElement('div');
     card.className = 'ed-section' + (sec._open ? ' open' : '');
-    const tipoLabel = sec.tipo === 'bloques' ? 'BLOQUES' : sec.tipo === 'tabla' ? 'TABLA · ' + sec.fuente : sec.tipo === 'tablamanual' ? 'TABLA MANUAL' : sec.tipo === 'grafico' ? 'GRÁFICO' : sec.tipo.toUpperCase();
-    const tituloEditable = sec.tipo === 'bloques' || sec.tipo === 'subportada' || sec.tipo === 'tablamanual' || sec.tipo === 'grafico';
+    const tipoLabel = sec.tipo === 'bloques' ? 'BLOQUES' : sec.tipo === 'tabla' ? 'TABLA · ' + sec.fuente : sec.tipo === 'tablamanual' ? 'TABLA MANUAL' : sec.tipo === 'grafico' ? 'GRÁFICO' : sec.tipo === 'mapadatos' ? 'MAPA' : sec.tipo.toUpperCase();
+    const tituloEditable = sec.tipo === 'bloques' || sec.tipo === 'subportada' || sec.tipo === 'tablamanual' || sec.tipo === 'grafico' || sec.tipo === 'mapadatos';
     const head = document.createElement('div');
     head.className = 'ed-head';
     head.innerHTML = '<button class="ed-btn exp">' + (sec._open ? '▾' : '▸') + '</button>'
@@ -2269,7 +2397,7 @@ function renderEditor(){
       + '<span class="ed-tipo">' + tipoLabel + '</span>'
       + '<input type="text" value="' + (sec.titulo||'').replace(/"/g,'&quot;') + '"' + (tituloEditable ? '' : ' disabled') + '>'
       + '<button class="ed-btn">▲</button><button class="ed-btn">▼</button>'
-      + ((sec.tipo === 'bloques' || sec.tipo === 'tabla' || sec.tipo === 'subportada' || sec.tipo === 'tablamanual' || sec.tipo === 'grafico') ? '<button class="ed-btn danger">Eliminar</button>' : '');
+      + ((sec.tipo === 'bloques' || sec.tipo === 'tabla' || sec.tipo === 'subportada' || sec.tipo === 'tablamanual' || sec.tipo === 'grafico' || sec.tipo === 'mapadatos') ? '<button class="ed-btn danger">Eliminar</button>' : '');
     card.appendChild(head);
     const hb = head.querySelectorAll('button, input');
     const expB = head.querySelector('.exp');
@@ -2595,6 +2723,128 @@ function renderEditor(){
 
       card.appendChild(body);
     }
+
+    if(sec.tipo === 'mapadatos'){
+      const body = document.createElement('div');
+      body.className = 'ed-body';
+      if(!sec.origen) sec.origen = 'excel';
+      const wb = LOADED_WB;
+      const EXCLUIR_HOJAS = ['Diapositivas','Config','Casos'];
+      const hojasDisponibles = wb ? wb.SheetNames.filter(n => !EXCLUIR_HOJAS.includes(n)) : [];
+      const tablasManuales = seccionesActuales().filter(s => s.tipo === 'tablamanual');
+
+      const rowOrigen = document.createElement('div');
+      rowOrigen.style.cssText = 'display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;';
+      rowOrigen.innerHTML = '<label style="font-size:12px; color:var(--muted); min-width:90px;">Origen de datos</label>'
+        + '<select class="m-origen" style="padding:7px; border:1px solid var(--gray-line); border-radius:5px; font-size:12px;">'
+        + '<option value="excel"' + (sec.origen==='excel'?' selected':'') + '>Hoja del Excel</option>'
+        + '<option value="tablamanual"' + (sec.origen==='tablamanual'?' selected':'') + '>Tabla manual de este informe</option>'
+        + '</select>';
+      body.appendChild(rowOrigen);
+
+      const rowFuente = document.createElement('div');
+      rowFuente.style.cssText = 'display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;';
+      body.appendChild(rowFuente);
+
+      const rowCols = document.createElement('div');
+      rowCols.style.cssText = 'display:flex; align-items:center; gap:16px; margin-bottom:6px; flex-wrap:wrap;';
+      body.appendChild(rowCols);
+
+      function columnasDisponiblesMapa(){
+        if(sec.origen === 'tablamanual'){
+          const t = tablasManuales.find(x => x.titulo === sec.tablaRef);
+          return t ? t.columnas.map(c => c.titulo) : [];
+        }
+        if(wb && sec.fuente){
+          const rows = sheetToRows(wb, sec.fuente);
+          if(rows && rows.length) return Object.keys(rows[0]);
+        }
+        return [];
+      }
+      function renderColSelectsMapa(){
+        rowCols.innerHTML = '';
+        const cols = columnasDisponiblesMapa();
+        const mk = (cls, label, current) => {
+          const span = document.createElement('span');
+          span.style.cssText = 'display:inline-flex; align-items:center; gap:6px;';
+          span.innerHTML = '<label style="font-size:12px; color:var(--muted);">' + label + '</label>'
+            + '<select class="' + cls + '" style="padding:7px; border:1px solid var(--gray-line); border-radius:5px; font-size:12px;">'
+            + '<option value="">Selecciona…</option>'
+            + cols.map(c => '<option' + (current===c?' selected':'') + '>' + escHtml(c) + '</option>').join('')
+            + '</select>';
+          return span;
+        };
+        const depSpan = mk('m-depto', 'Columna de departamento', sec.colDepto);
+        const valSpan = mk('m-val', 'Columna de valor', sec.colValor);
+        rowCols.appendChild(depSpan);
+        rowCols.appendChild(valSpan);
+        depSpan.querySelector('select').addEventListener('change', e => sec.colDepto = e.target.value);
+        valSpan.querySelector('select').addEventListener('change', e => sec.colValor = e.target.value);
+      }
+
+      function renderFuenteRowMapa(){
+        rowFuente.innerHTML = '';
+        if(sec.origen === 'tablamanual'){
+          if(!tablasManuales.length){
+            const warn = document.createElement('p');
+            warn.style.cssText = 'font-size:12px; color:#c8102e; margin:0;';
+            warn.textContent = 'Todavía no hay ninguna tabla manual en esta hoja. Crea una primero (opción "Tabla manual" del mismo desplegable de arriba).';
+            rowFuente.appendChild(warn);
+            return;
+          }
+          const sel = document.createElement('span');
+          sel.style.cssText = 'display:inline-flex; align-items:center; gap:6px;';
+          sel.innerHTML = '<label style="font-size:12px; color:var(--muted); min-width:90px;">Tabla manual</label>'
+            + '<select class="m-tablaref" style="padding:7px; border:1px solid var(--gray-line); border-radius:5px; font-size:12px;">'
+            + '<option value="">Selecciona…</option>'
+            + tablasManuales.map(t => '<option' + (sec.tablaRef===t.titulo?' selected':'') + '>' + escHtml(t.titulo) + '</option>').join('')
+            + '</select>';
+          rowFuente.appendChild(sel);
+          sel.querySelector('select').addEventListener('change', e => {
+            sec.tablaRef = e.target.value;
+            sec.colDepto = ''; sec.colValor = '';
+            renderColSelectsMapa();
+          });
+        } else {
+          const sel = document.createElement('span');
+          sel.style.cssText = 'display:inline-flex; align-items:center; gap:6px;';
+          sel.innerHTML = '<label style="font-size:12px; color:var(--muted); min-width:90px;">Hoja de datos</label>'
+            + '<select class="m-fuente" style="padding:7px; border:1px solid var(--gray-line); border-radius:5px; font-size:12px;">'
+            + '<option value="">Selecciona…</option>'
+            + hojasDisponibles.map(h => '<option' + (sec.fuente===h?' selected':'') + '>' + h + '</option>').join('')
+            + '</select>';
+          rowFuente.appendChild(sel);
+          sel.querySelector('select').addEventListener('change', e => {
+            sec.fuente = e.target.value;
+            sec.colDepto = ''; sec.colValor = '';
+            renderColSelectsMapa();
+          });
+          if(!wb){
+            const warn = document.createElement('p');
+            warn.style.cssText = 'font-size:12px; color:#c8102e; margin:6px 0 0;';
+            warn.textContent = 'Carga primero un Excel para poder elegir la hoja y las columnas.';
+            rowFuente.appendChild(warn);
+          }
+        }
+      }
+
+      renderFuenteRowMapa();
+      renderColSelectsMapa();
+
+      rowOrigen.querySelector('.m-origen').addEventListener('change', e => {
+        sec.origen = e.target.value;
+        sec.fuente = ''; sec.tablaRef = ''; sec.colDepto = ''; sec.colValor = '';
+        renderFuenteRowMapa();
+        renderColSelectsMapa();
+      });
+
+      const nota = document.createElement('p');
+      nota.style.cssText = 'font-size:11px; color:var(--muted); margin:4px 0 0;';
+      nota.textContent = 'La columna de departamento debe traer el nombre del departamento (ej. "Bolívar", "Nariño"); no hace falta que coincida en mayúsculas ni tildes.';
+      body.appendChild(nota);
+
+      card.appendChild(body);
+    }
     box.appendChild(card);
   });
 }
@@ -2638,6 +2888,8 @@ function serializeDiapositivas(){
         if(!any) aoa.push([hoja, sec.titulo, orden, 'tablamanual', act, '', '', '', '', '', '', '', '', '', '']);
       } else if(sec.tipo === 'grafico'){
         aoa.push([hoja, sec.titulo, orden, 'grafico', act, (sec.origen==='tablamanual'?'':sec.fuente||''), '', '', sec.tipoGrafico||'barras', sec.colEtiqueta||'', sec.colValor||'', sec.origen||'excel', (sec.origen==='tablamanual'?(sec.tablaRef||''):''), '', '']);
+      } else if(sec.tipo === 'mapadatos'){
+        aoa.push([hoja, sec.titulo, orden, 'mapadatos', act, (sec.origen==='tablamanual'?'':sec.fuente||''), '', '', '', sec.colDepto||'', sec.colValor||'', sec.origen||'excel', (sec.origen==='tablamanual'?(sec.tablaRef||''):''), '', '']);
       } else {
         aoa.push([hoja, sec.titulo, orden, sec.tipo, act, sec.fuente||'', '', '', '', '', '', '', '', '', '']);
       }

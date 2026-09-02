@@ -70,7 +70,7 @@ constante `EXPECTED` en `index.html`.
 ### Hoja `Diapositivas` (estructura)
 
 Columnas: `Hoja` (`Portada` · `Informe` · `Caso 1` a `Caso 5`), `Seccion`, `Orden`,
-`Tipo` (`tabla` · `contactabilidad` · `mapa` · `bloques` · `subportada` · `tablamanual` · `grafico` · `campo` para portada · `hoja` para definir un caso),
+`Tipo` (`tabla` · `contactabilidad` · `mapa` · `bloques` · `subportada` · `tablamanual` · `grafico` · `mapadatos` · `campo` para portada · `hoja` para definir un caso),
 `Activa` (SI/NO), `Fuente` (para tipo tabla: nombre de la hoja de datos; para tipo bloques: enlace opcional a la
 fuente de esos datos, igual en todas las filas de un mismo bloque), y para tipo `bloques` una fila por celda con:
 `Bloque` (1-4), `Celda` (1-4), `Contenido` (`texto` · `imagen` · `imagen+texto`), `Titulo`, `Detalle`,
@@ -103,6 +103,12 @@ y `Ajuste` (`recortar` · `completa`).
   la tabla manual de referencia (debe existir una tabla manual con ese título exacto en la misma hoja). Si una
   etiqueta aparece en varias filas, sus valores se suman. Se crea y edita desde **Diseño de hojas**, donde el
   origen, la hoja o tabla, y las columnas se eligen de listas desplegables en vez de escribirse a mano.
+- **Mapa de datos**: sección de tipo `Tipo=mapadatos`, distinta del mapa fijo original (`Tipo=mapa`), que colorea
+  el mismo contorno de Colombia por departamento a partir de una hoja del Excel o de una tabla manual, y se puede
+  repetir varias veces en un mismo informe (a diferencia del mapa fijo, que es único). Una sola fila define la
+  sección, con las mismas columnas y el mismo significado de `Cifra`/`Fondo`/`Fuente` que la sección `grafico`,
+  cambiando `Titulo` por el nombre de la columna de departamento. El nombre del departamento se compara sin
+  distinguir mayúsculas ni tildes; los que no se reconozcan se listan debajo del mapa para poder corregirlos.
 - **Casos Emblemáticos**: cada caso se define con una fila `Tipo=hoja` (nombre en `Seccion`, estado en `Activa`)
   y sus secciones (bloques, subportadas, tablas manuales o gráficos) con `Hoja=Caso N`. Los casos inactivos no
   aparecen en el menú.
