@@ -524,12 +524,14 @@
         <b>6. Diseño de hojas (hoja Diapositivas del Excel)</b>
         <p style="margin:8px 0 0;">El orden, la visibilidad y el contenido de las secciones del Informe se definen en la hoja
         <code>Diapositivas</code> del Excel. Puedes editarla directamente en Excel, o de forma visual en
-        <b>Configuración → Diseño de hojas</b>: activar/desactivar secciones, reordenarlas (▲▼), y crear secciones
-        tipo "bloques" (de 1 a 4 bloques horizontales, cada uno con 1 a 4 celdas de texto, imagen o imagen+texto,
-        con título, detalle, cifra destacada, fondo de color y ajuste de imagen). Al terminar, usa
-        <b>"Descargar Excel actualizado"</b> y sube ese archivo al repositorio como <code>data/informe.xlsx</code>
-        para que el diseño quede permanente. Las imágenes se referencian por su nombre de archivo en la carpeta
-        <code>fotos/</code>.</p>
+        <b>Configuración → Diseño de hojas</b>: activar/desactivar secciones, reordenarlas (▲▼), y elegir en el
+        desplegable qué tipo de sección agregar — "Sección de bloques" (de 1 a 4 bloques horizontales, cada uno con
+        1 a 4 celdas de texto, imagen o imagen+texto, con título, detalle, cifra destacada, fondo de color y ajuste
+        de imagen) o "Subportada" (los mismos campos y estilos de la Portada — eyebrow, título, subtítulo, etiqueta,
+        convenio, normal — para introducir un subtema dentro del Informe o de un Caso, con la misma configuración
+        visual que la portada principal). Al terminar, usa <b>"Descargar Excel actualizado"</b> y sube ese archivo
+        al repositorio como <code>data/informe.xlsx</code> para que el diseño quede permanente. Las imágenes se
+        referencian por su nombre de archivo en la carpeta <code>fotos/</code>.</p>
       </div>
 
       <div class="help-box" style="margin-bottom:18px;">
@@ -746,7 +748,11 @@
       <code>Diapositivas</code> del Excel: al terminar, descarga el Excel actualizado y súbelo al repositorio.</p>
 
       <div class="hoja-bar" id="edHojaBar" style="margin-bottom:14px;"></div>
-      <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px;">
+      <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px; align-items:center;">
+        <select id="selTipoSeccion" style="padding:9px 10px; border:1px solid var(--gray-line); border-radius:5px; font-family:inherit; font-size:13px; display:none;">
+          <option value="bloques">Sección de bloques</option>
+          <option value="subportada">Subportada (mismo estilo de la portada)</option>
+        </select>
         <button class="upload-btn" style="border:none; font-family:inherit;" onclick="agregarElemento()" id="btnAgregarElem">+ Agregar sección de bloques</button>
         <button class="upload-btn" style="border:none; font-family:inherit; background:var(--gold); color:#3a2c00;" onclick="renderAll(); alert('Cambios aplicados a la vista.');">Aplicar cambios</button>
         <button class="upload-btn" style="border:none; font-family:inherit; background:var(--red);" onclick="descargarExcelActualizado()">Descargar Excel actualizado</button>
@@ -1695,7 +1701,7 @@ function parseDiapositivas(rows){
     if(!map[orden]){
       map[orden] = {
         titulo: (r['Seccion']||'')+'', tipo, activa,
-        fuente: ((r['Fuente']||'')+'').trim(), bloquesMap: {}
+        fuente: ((r['Fuente']||'')+'').trim(), bloquesMap: {}, camposMap: {}
       };
     }
     const sec = map[orden];
@@ -1708,11 +1714,22 @@ function parseDiapositivas(rows){
         cifra: (r['Cifra']||'')+'', fondo: ((r['Fondo']||'blanco')+'').trim().toLowerCase(),
         imagen: ((r['Imagen']||'')+'').trim(), ajuste: ((r['Ajuste']||'recortar')+'').trim().toLowerCase()
       };
+    } else if(sec.tipo === 'subportada'){
+      const i = Number(r['Bloque']) || (Object.keys(sec.camposMap).length + 1);
+      sec.camposMap[i] = {
+        estilo: ((r['Contenido']||'normal')+'').trim().toLowerCase(),
+        texto: (r['Detalle']||'')+'',
+        activa: ((r['Cifra']||'SI')+'').trim().toUpperCase() !== 'NO'
+      };
     }
   }
   function finish(map){
     return Object.keys(map).map(Number).sort((a,b)=>a-b).map(o => {
       const s = map[o];
+      if(s.tipo === 'subportada'){
+        const campos = Object.keys(s.camposMap).map(Number).sort((a,b)=>a-b).map(i => s.camposMap[i]);
+        return {titulo:s.titulo, tipo:s.tipo, activa:s.activa, fuente:s.fuente, campos: campos.length ? campos : defaultPortada()};
+      }
       const bloques = Object.keys(s.bloquesMap).map(Number).sort((a,b)=>a-b)
         .map(b => ({celdas: Object.keys(s.bloquesMap[b]).map(Number).sort((a,b)=>a-b).map(c => s.bloquesMap[b][c])}));
       return {titulo:s.titulo, tipo:s.tipo, activa:s.activa, fuente:s.fuente, bloques};
@@ -1764,6 +1781,7 @@ function buildGenericTableSlide(sec, idx){
 }
 function buildSectionElement(sec, idx){
   if(sec.tipo === 'bloques') return buildBloquesSlide(sec, idx);
+  if(sec.tipo === 'subportada') return buildSubportadaSlide(sec);
   if(sec.tipo === 'tabla'){
     const fixedId = FIXED_ID(sec);
     if(fixedId){
@@ -1817,6 +1835,19 @@ function buildBloquesSlide(sec, idx){
   return slide;
 }
 
+function buildSubportadaSlide(sec){
+  const slide = document.createElement('div');
+  slide.className = 'slide cover custom-slide';
+  slide.innerHTML = (sec.campos||[]).filter(c => c.activa).map(c => {
+    const cls = ESTILOS_PORTADA.includes(c.estilo) ? c.estilo : 'normal';
+    return '<div class="cf-' + cls + '">' + (c.texto||'') + '</div>';
+  }).join('');
+  const f = document.createElement('img');
+  f.src = FOOTER_LOGO_SRC; f.className = 'slide-footer-logo'; f.alt = '';
+  slide.appendChild(f);
+  return slide;
+}
+
 function renderPortada(){
   const box = document.getElementById('coverFields');
   box.innerHTML = PAGES.portada.filter(c => c.activa).map(c => {
@@ -1862,7 +1893,7 @@ function renderCasos(){
     page.querySelectorAll('.custom-slide').forEach(el => el.remove());
     let idx = 0;
     caso.secciones.forEach(sec => {
-      if(sec.tipo !== 'bloques' && sec.tipo !== 'tabla') return;
+      if(sec.tipo !== 'bloques' && sec.tipo !== 'tabla' && sec.tipo !== 'subportada') return;
       idx++;
       const el = buildSectionElement(sec, idx);
       if(!el) return;
@@ -1910,7 +1941,12 @@ function agregarElemento(){
     PAGES.portada.push({estilo:'normal', texto:'Nuevo campo de texto', activa:true});
   } else {
     const arr = seccionesActuales();
-    arr.push({titulo:'Nueva sección', tipo:'bloques', activa:true, fuente:'', bloques:[{celdas:[nuevaCelda()]}], _open:true});
+    const tipo = document.getElementById('selTipoSeccion').value;
+    if(tipo === 'subportada'){
+      arr.push({titulo:'Nueva subportada', tipo:'subportada', activa:true, fuente:'', campos: defaultPortada(), _open:true});
+    } else {
+      arr.push({titulo:'Nueva sección', tipo:'bloques', activa:true, fuente:'', bloques:[{celdas:[nuevaCelda()]}], _open:true});
+    }
   }
   renderEditor();
 }
@@ -1930,7 +1966,8 @@ function renderHojaBar(){
     '<button data-hoja="' + it.id + '" class="' + (ED_HOJA===it.id?'sel ':'') + (it.inactiva?'inactiva':'') + '">' + it.label + '</button>'
   ).join('');
   bar.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { ED_HOJA = b.dataset.hoja; renderEditor(); }));
-  document.getElementById('btnAgregarElem').textContent = ED_HOJA==='portada' ? '+ Agregar campo de texto' : '+ Agregar sección de bloques';
+  document.getElementById('btnAgregarElem').textContent = ED_HOJA==='portada' ? '+ Agregar campo de texto' : '+ Agregar sección';
+  document.getElementById('selTipoSeccion').style.display = ED_HOJA==='portada' ? 'none' : '';
 }
 
 function renderCasoHead(){
@@ -1989,14 +2026,15 @@ function renderEditor(){
     const card = document.createElement('div');
     card.className = 'ed-section' + (sec._open ? ' open' : '');
     const tipoLabel = sec.tipo === 'bloques' ? 'BLOQUES' : sec.tipo === 'tabla' ? 'TABLA · ' + sec.fuente : sec.tipo.toUpperCase();
+    const tituloEditable = sec.tipo === 'bloques' || sec.tipo === 'subportada';
     const head = document.createElement('div');
     head.className = 'ed-head';
     head.innerHTML = '<button class="ed-btn exp">' + (sec._open ? '▾' : '▸') + '</button>'
       + '<input type="checkbox" ' + (sec.activa?'checked':'') + ' title="Mostrar/ocultar">'
       + '<span class="ed-tipo">' + tipoLabel + '</span>'
-      + '<input type="text" value="' + (sec.titulo||'').replace(/"/g,'&quot;') + '"' + (sec.tipo!=='bloques' ? ' disabled' : '') + '>'
+      + '<input type="text" value="' + (sec.titulo||'').replace(/"/g,'&quot;') + '"' + (tituloEditable ? '' : ' disabled') + '>'
       + '<button class="ed-btn">▲</button><button class="ed-btn">▼</button>'
-      + ((sec.tipo === 'bloques' || sec.tipo === 'tabla') ? '<button class="ed-btn danger">Eliminar</button>' : '');
+      + ((sec.tipo === 'bloques' || sec.tipo === 'tabla' || sec.tipo === 'subportada') ? '<button class="ed-btn danger">Eliminar</button>' : '');
     card.appendChild(head);
     const hb = head.querySelectorAll('button, input');
     const expB = head.querySelector('.exp');
@@ -2088,6 +2126,37 @@ function renderEditor(){
       body.appendChild(addB);
       card.appendChild(body);
     }
+
+    if(sec.tipo === 'subportada'){
+      const body = document.createElement('div');
+      body.className = 'ed-body';
+      body.innerHTML = '<p style="margin:0 0 10px; font-size:12px; color:var(--muted);">Mismos campos y estilos que la Portada — úsalos para introducir un subtema dentro de esta hoja.</p>';
+      (sec.campos||[]).forEach((campo, ci) => {
+        const row = document.createElement('div');
+        row.className = 'ed-section open';
+        row.style.marginBottom = '6px';
+        row.innerHTML = '<div class="ed-head">'
+          + '<input type="checkbox" ' + (campo.activa?'checked':'') + ' title="Mostrar/ocultar">'
+          + '<select style="width:130px; padding:7px; border:1px solid var(--gray-line); border-radius:5px; font-family:inherit; font-size:12px;">'
+          + ESTILOS_PORTADA.map(e => '<option' + (campo.estilo===e?' selected':'') + '>' + e + '</option>').join('') + '</select>'
+          + '<input type="text" value="' + (campo.texto||'').replace(/"/g,'&quot;') + '">'
+          + '<button class="ed-btn">▲</button><button class="ed-btn">▼</button>'
+          + '<button class="ed-btn danger">Eliminar</button></div>';
+        const [chk, sel, txt, up, down, del] = row.querySelectorAll('input,select,button');
+        chk.addEventListener('change', e => campo.activa = e.target.checked);
+        sel.addEventListener('change', e => campo.estilo = e.target.value);
+        txt.addEventListener('input', e => campo.texto = e.target.value);
+        up.addEventListener('click', () => { if(ci>0){ [sec.campos[ci-1],sec.campos[ci]]=[sec.campos[ci],sec.campos[ci-1]]; sec._open = true; renderEditor(); } });
+        down.addEventListener('click', () => { if(ci<sec.campos.length-1){ [sec.campos[ci+1],sec.campos[ci]]=[sec.campos[ci],sec.campos[ci+1]]; sec._open = true; renderEditor(); } });
+        del.addEventListener('click', () => { if(confirm('¿Eliminar este campo?')){ sec.campos.splice(ci,1); sec._open = true; renderEditor(); } });
+        body.appendChild(row);
+      });
+      const addC = document.createElement('button');
+      addC.className = 'ed-btn'; addC.textContent = '+ Agregar campo';
+      addC.addEventListener('click', () => { sec.campos.push({estilo:'normal', texto:'Nuevo campo', activa:true}); sec._open = true; renderEditor(); });
+      body.appendChild(addC);
+      card.appendChild(body);
+    }
     box.appendChild(card);
   });
 }
@@ -2109,6 +2178,13 @@ function serializeDiapositivas(){
           aoa.push([hoja, sec.titulo, orden, 'bloques', act, '', bi+1, ci+1, c.contenido, c.titulo, c.detalle, c.cifra, c.fondo, c.imagen, c.ajuste]);
         }));
         if(!any) aoa.push([hoja, sec.titulo, orden, 'bloques', act, '', '', '', '', '', '', '', '', '', '']);
+      } else if(sec.tipo === 'subportada'){
+        let any = false;
+        (sec.campos||[]).forEach((c, ci) => {
+          any = true;
+          aoa.push([hoja, sec.titulo, orden, 'subportada', act, '', ci+1, '', c.estilo, '', c.texto, c.activa?'SI':'NO', '', '', '']);
+        });
+        if(!any) aoa.push([hoja, sec.titulo, orden, 'subportada', act, '', '', '', '', '', '', '', '', '', '']);
       } else {
         aoa.push([hoja, sec.titulo, orden, sec.tipo, act, sec.fuente||'', '', '', '', '', '', '', '', '', '']);
       }

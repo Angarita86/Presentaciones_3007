@@ -70,7 +70,7 @@ constante `EXPECTED` en `index.html`.
 ### Hoja `Diapositivas` (estructura)
 
 Columnas: `Hoja` (`Portada` · `Informe` · `Caso 1` a `Caso 5`), `Seccion`, `Orden`,
-`Tipo` (`tabla` · `contactabilidad` · `mapa` · `bloques` · `campo` para portada · `hoja` para definir un caso),
+`Tipo` (`tabla` · `contactabilidad` · `mapa` · `bloques` · `subportada` · `campo` para portada · `hoja` para definir un caso),
 `Activa` (SI/NO), `Fuente` (para tipo tabla: nombre de la hoja de datos), y para tipo `bloques` una fila por celda con:
 `Bloque` (1-4), `Celda` (1-4), `Contenido` (`texto` · `imagen` · `imagen+texto`), `Titulo`, `Detalle`,
 `Cifra`, `Fondo` (`blanco` · `azul` · `dorado` · `rojo` · `gris`), `Imagen` (nombre de archivo en `fotos/` o `imagenes/`)
@@ -78,8 +78,13 @@ y `Ajuste` (`recortar` · `completa`).
 
 - **Portada**: filas con `Hoja=Portada`, `Tipo=campo`; el estilo del campo va en `Contenido`
   (`eyebrow`, `titulo`, `subtitulo`, `etiqueta`, `convenio`, `normal`) y el texto en `Detalle`.
+- **Subportada**: sección de tipo `Tipo=subportada` dentro de `Informe` o de un `Caso N`, para introducir un subtema
+  con la misma configuración visual que la Portada. Una fila por campo, usando `Bloque` como número de campo (orden),
+  `Contenido` para el estilo (mismos valores que la Portada), `Detalle` para el texto y `Cifra` (SI/NO) para
+  mostrar u ocultar ese campo puntual. Se crea desde **Diseño de hojas**, eligiendo "Subportada" en el
+  desplegable junto al botón "+ Agregar sección".
 - **Casos Emblemáticos**: cada caso se define con una fila `Tipo=hoja` (nombre en `Seccion`, estado en `Activa`)
-  y sus secciones de bloques con `Hoja=Caso N`. Los casos inactivos no aparecen en el menú.
+  y sus secciones de bloques o subportadas con `Hoja=Caso N`. Los casos inactivos no aparecen en el menú.
 
 ## Guardar directo desde el informe (token de GitHub)
 
