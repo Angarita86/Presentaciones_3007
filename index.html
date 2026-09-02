@@ -538,7 +538,11 @@
         editor: al crearla defines cuántas filas y cuántas columnas necesitas, con un máximo de 50 filas y 12
         columnas, y luego puedes seguir agregando o quitando filas y columnas, editar el título de cada columna y
         cada celda una por una, y elegir el color del encabezado entre los mismos cinco colores ya usados en los
-        bloques). Al terminar, usa <b>"Descargar Excel actualizado"</b> y sube ese archivo
+        bloques), o "Gráfico de barras o de torta" (dibuja un gráfico a partir de una hoja del Excel de datos, o a
+        partir de una tabla manual que ya hayas creado en la misma hoja del Informe o del Caso: eliges el origen,
+        luego la hoja o la tabla, el tipo de gráfico, la columna que va como etiqueta y la columna numérica que se
+        grafica; si una etiqueta se repite, sus valores se suman automáticamente). Al terminar, usa
+        <b>"Descargar Excel actualizado"</b> y sube ese archivo
         al repositorio como <code>data/informe.xlsx</code> para que el diseño quede permanente. Las imágenes se
         referencian por su nombre de archivo en la carpeta <code>fotos/</code>.</p>
       </div>
@@ -762,6 +766,7 @@
           <option value="bloques">Sección de bloques</option>
           <option value="subportada">Subportada (mismo estilo de la portada)</option>
           <option value="tablamanual">Tabla manual (sin vincular a Excel)</option>
+          <option value="grafico">Gráfico de barras o de torta</option>
         </select>
         <span id="tablaManualDims" style="display:none; align-items:center; gap:10px;">
           <label style="font-size:12px; color:var(--muted);">Filas
@@ -1749,6 +1754,12 @@ function parseDiapositivas(rows){
         if(!sec.filasMap[b]) sec.filasMap[b] = {};
         sec.filasMap[b][c] = (r['Detalle']||'')+'';
       }
+    } else if(sec.tipo === 'grafico'){
+      sec.tipoGrafico = ((r['Contenido']||'barras')+'').trim().toLowerCase();
+      sec.colEtiqueta = (r['Titulo']||'')+'';
+      sec.colValor = (r['Detalle']||'')+'';
+      sec.origen = ((r['Cifra']||'excel')+'').trim().toLowerCase() === 'tablamanual' ? 'tablamanual' : 'excel';
+      sec.tablaRef = (r['Fondo']||'')+'';
     }
   }
   function finish(map){
@@ -1770,6 +1781,9 @@ function parseDiapositivas(rows){
           return arr;
         });
         return {titulo:s.titulo, tipo:s.tipo, activa:s.activa, fuente:s.fuente, columnas, filas, colorEncabezado: s.colorEncabezado || 'azul'};
+      }
+      if(s.tipo === 'grafico'){
+        return {titulo:s.titulo, tipo:s.tipo, activa:s.activa, fuente:s.fuente, tipoGrafico: s.tipoGrafico||'barras', colEtiqueta: s.colEtiqueta||'', colValor: s.colValor||'', origen: s.origen||'excel', tablaRef: s.tablaRef||''};
       }
       const bloques = Object.keys(s.bloquesMap).map(Number).sort((a,b)=>a-b)
         .map(b => ({celdas: Object.keys(s.bloquesMap[b]).map(Number).sort((a,b)=>a-b).map(c => s.bloquesMap[b][c])}));
@@ -1820,10 +1834,11 @@ function buildGenericTableSlide(sec, idx){
   slide.appendChild(f);
   return slide;
 }
-function buildSectionElement(sec, idx){
+function buildSectionElement(sec, idx, secArr){
   if(sec.tipo === 'bloques') return buildBloquesSlide(sec, idx);
   if(sec.tipo === 'subportada') return buildSubportadaSlide(sec);
   if(sec.tipo === 'tablamanual') return buildTablaManualSlide(sec, idx);
+  if(sec.tipo === 'grafico') return buildGraficoSlide(sec, idx, secArr);
   if(sec.tipo === 'tabla'){
     const fixedId = FIXED_ID(sec);
     if(fixedId){
@@ -1870,6 +1885,123 @@ function buildBloquesSlide(sec, idx){
     });
     inner += '</div>';
   });
+  slide.innerHTML = inner;
+  const f = document.createElement('img');
+  f.src = FOOTER_LOGO_SRC; f.className = 'slide-footer-logo'; f.alt = '';
+  slide.appendChild(f);
+  return slide;
+}
+
+/* ============ GRÁFICOS (SVG puro, sin dependencias externas) ============ */
+const PALETA_GRAFICO = ['#1F3864','#2E5E8C','#3F87A6','#F2B705','#C8102E','#6B7A99','#8A6400','#4C8C4A','#9C6B9E','#3A6B8A'];
+function truncateTxt(s, n){ s = (s==null?'':String(s)); return s.length > n ? s.slice(0, n-1) + '…' : s; }
+
+function svgBarChart(data){
+  const w = 640, h = 340, padL = 55, padR = 20, padT = 20, padB = (data.length > 6 ? 95 : 55);
+  const chartW = w - padL - padR, chartH = h - padT - padB;
+  const maxVal = Math.max(1, ...data.map(d => d.value));
+  const gap = chartW / data.length;
+  const barW = Math.min(gap * 0.6, 70);
+  const rotar = data.length > 6;
+  let bars = '', labels = '';
+  data.forEach((d, i) => {
+    const bh = (d.value / maxVal) * chartH;
+    const x = padL + i * gap + (gap - barW) / 2;
+    const y = padT + chartH - bh;
+    const color = PALETA_GRAFICO[i % PALETA_GRAFICO.length];
+    bars += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + barW.toFixed(1) + '" height="' + Math.max(bh,0).toFixed(1) + '" fill="' + color + '" rx="3"></rect>';
+    bars += '<text x="' + (x + barW/2).toFixed(1) + '" y="' + (y - 6).toFixed(1) + '" text-anchor="middle" font-size="11" fill="#22293A">' + d.value.toLocaleString('es-CO') + '</text>';
+    const lx = (x + barW/2).toFixed(1), ly = (padT + chartH + (rotar ? 14 : 18)).toFixed(1);
+    const anchor = rotar ? 'end' : 'middle';
+    const rot = rotar ? ' transform="rotate(-35 ' + lx + ' ' + ly + ')"' : '';
+    labels += '<text x="' + lx + '" y="' + ly + '" text-anchor="' + anchor + '" font-size="10.5" fill="#595959"' + rot + '>' + escHtml(truncateTxt(d.label, 16)) + '</text>';
+  });
+  const axis = '<line x1="' + padL + '" y1="' + (padT+chartH) + '" x2="' + (padL+chartW) + '" y2="' + (padT+chartH) + '" stroke="#D8DEE9" stroke-width="1"></line>';
+  return '<div style="overflow-x:auto;"><svg viewBox="0 0 ' + w + ' ' + h + '" width="100%" style="max-width:' + w + 'px; display:block; margin:10px auto 0;">' + axis + bars + labels + '</svg></div>';
+}
+
+function svgPieChart(data){
+  const w = 420, h = 300, cx = 150, cy = 150, r = 110;
+  const total = data.reduce((s,d) => s + d.value, 0) || 1;
+  let paths = '', legend = '', angleStart = -Math.PI/2;
+  if(data.length === 1){
+    paths = '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + PALETA_GRAFICO[0] + '"></circle>';
+    legend = '<div style="display:flex; align-items:center; gap:6px; font-size:12px; margin-bottom:4px;"><span style="width:11px; height:11px; border-radius:3px; background:' + PALETA_GRAFICO[0] + '; display:inline-block;"></span>' + escHtml(data[0].label) + ' — 100%</div>';
+  } else {
+    data.forEach((d, i) => {
+      const frac = d.value / total;
+      const angleEnd = angleStart + frac * Math.PI * 2;
+      const x1 = cx + r*Math.cos(angleStart), y1 = cy + r*Math.sin(angleStart);
+      const x2 = cx + r*Math.cos(angleEnd), y2 = cy + r*Math.sin(angleEnd);
+      const largeArc = (angleEnd - angleStart) > Math.PI ? 1 : 0;
+      const color = PALETA_GRAFICO[i % PALETA_GRAFICO.length];
+      paths += '<path d="M' + cx + ',' + cy + ' L' + x1.toFixed(2) + ',' + y1.toFixed(2) + ' A' + r + ',' + r + ' 0 ' + largeArc + ' 1 ' + x2.toFixed(2) + ',' + y2.toFixed(2) + ' Z" fill="' + color + '" stroke="#fff" stroke-width="1.5"></path>';
+      const pct = Math.round(frac * 100);
+      legend += '<div style="display:flex; align-items:center; gap:6px; font-size:12px; margin-bottom:4px;"><span style="width:11px; height:11px; border-radius:3px; background:' + color + '; display:inline-block; flex-shrink:0;"></span>' + escHtml(truncateTxt(d.label,28)) + ' — ' + pct + '%</div>';
+      angleStart = angleEnd;
+    });
+  }
+  return '<div style="display:flex; gap:24px; align-items:center; flex-wrap:wrap; justify-content:center; margin-top:10px;">'
+    + '<svg viewBox="0 0 ' + w + ' ' + h + '" width="280" height="200">' + paths + '</svg>'
+    + '<div>' + legend + '</div></div>';
+}
+
+function buildGraficoSlide(sec, idx, secArr){
+  const slide = document.createElement('div');
+  slide.className = 'slide custom-slide';
+  let inner = '<div class="slide-eyebrow">Sección ' + idx + '</div><h2>' + (sec.titulo||'') + '</h2>';
+  const origen = sec.origen || 'excel';
+
+  let rows = null, mensaje = null;
+
+  if(origen === 'tablamanual'){
+    if(!sec.tablaRef){
+      mensaje = 'Selecciona la tabla manual y las columnas en Configuración → Diseño de hojas.';
+    } else {
+      const tabla = (secArr||[]).find(s => s.tipo === 'tablamanual' && s.titulo === sec.tablaRef);
+      if(!tabla){
+        mensaje = '⚠️ No se encontró la tabla manual "' + escHtml(sec.tablaRef) + '" en esta hoja. Puede que haya sido renombrada o eliminada.';
+      } else if(!sec.colEtiqueta || !sec.colValor){
+        mensaje = 'Selecciona la columna de etiqueta y la de valor en Configuración → Diseño de hojas.';
+      } else {
+        const nombresCols = tabla.columnas.map(c => c.titulo);
+        const iEtq = nombresCols.indexOf(sec.colEtiqueta), iVal = nombresCols.indexOf(sec.colValor);
+        if(iEtq === -1 || iVal === -1){
+          mensaje = 'Las columnas seleccionadas ya no existen en esa tabla. Vuelve a elegirlas en el editor.';
+        } else {
+          rows = tabla.filas.map(f => ({ [sec.colEtiqueta]: f[iEtq], [sec.colValor]: f[iVal] }));
+        }
+      }
+    }
+  } else {
+    if(!sec.fuente || !sec.colEtiqueta || !sec.colValor){
+      mensaje = 'Selecciona la hoja de datos y las columnas de etiqueta y valor en Configuración → Diseño de hojas.';
+    } else {
+      const wb = LOADED_WB;
+      rows = wb ? sheetToRows(wb, sec.fuente) : null;
+      if(!rows) mensaje = '⚠️ No se encontró la hoja "<b>' + escHtml(sec.fuente) + '</b>" en el Excel cargado.';
+      else if(!rows.length) mensaje = 'La hoja "' + escHtml(sec.fuente) + '" no tiene filas de datos.';
+    }
+  }
+
+  if(mensaje){
+    inner += '<p style="color:' + (mensaje.indexOf('⚠️')===0?'#c8102e':'#999') + '; font-style:' + (mensaje.indexOf('⚠️')===0?'normal':'italic') + '; font-size:13px;">' + mensaje + '</p>';
+  } else {
+    const map = new Map();
+    rows.forEach(r => {
+      const label = (r[sec.colEtiqueta]==null ? '' : String(r[sec.colEtiqueta])).trim();
+      if(!label) return;
+      const raw = r[sec.colValor];
+      const val = (typeof raw === 'number') ? raw : (parseFloat(String(raw==null?'':raw).replace(',','.')) || 0);
+      map.set(label, (map.get(label)||0) + val);
+    });
+    const data = Array.from(map, ([label,value]) => ({label, value}));
+    if(!data.length){
+      inner += '<p style="color:#999; font-style:italic;">No hay datos numéricos para graficar con las columnas seleccionadas.</p>';
+    } else {
+      inner += (sec.tipoGrafico === 'torta') ? svgPieChart(data) : svgBarChart(data);
+    }
+  }
   slide.innerHTML = inner;
   const f = document.createElement('img');
   f.src = FOOTER_LOGO_SRC; f.className = 'slide-footer-logo'; f.alt = '';
@@ -1937,7 +2069,7 @@ function renderDesign(){
       page.insertBefore(el, gracias);
       return;
     }
-    const el = buildSectionElement(sec, idx);
+    const el = buildSectionElement(sec, idx, PAGES.informe);
     if(!el) return;
     if(!el.classList.contains('custom-slide') && el.parentElement === page){
       /* elemento fijo ya reubicado por buildSectionElement */
@@ -1954,9 +2086,9 @@ function renderCasos(){
     page.querySelectorAll('.custom-slide').forEach(el => el.remove());
     let idx = 0;
     caso.secciones.forEach(sec => {
-      if(sec.tipo !== 'bloques' && sec.tipo !== 'tabla' && sec.tipo !== 'subportada' && sec.tipo !== 'tablamanual') return;
+      if(sec.tipo !== 'bloques' && sec.tipo !== 'tabla' && sec.tipo !== 'subportada' && sec.tipo !== 'tablamanual' && sec.tipo !== 'grafico') return;
       idx++;
-      const el = buildSectionElement(sec, idx);
+      const el = buildSectionElement(sec, idx, caso.secciones);
       if(!el) return;
       page.appendChild(el);
     });
@@ -2011,6 +2143,8 @@ function agregarElemento(){
       const columnas = Array.from({length:nc}, (_,i) => ({titulo:'Columna ' + (i+1)}));
       const filas = Array.from({length:nf}, () => Array.from({length:nc}, () => ''));
       arr.push({titulo:'Nueva tabla', tipo:'tablamanual', activa:true, fuente:'', columnas, filas, colorEncabezado:'azul', _open:true});
+    } else if(tipo === 'grafico'){
+      arr.push({titulo:'Nuevo gráfico', tipo:'grafico', activa:true, fuente:'', tipoGrafico:'barras', origen:'excel', tablaRef:'', colEtiqueta:'', colValor:'', _open:true});
     } else {
       arr.push({titulo:'Nueva sección', tipo:'bloques', activa:true, fuente:'', bloques:[{celdas:[nuevaCelda()]}], _open:true});
     }
@@ -2098,8 +2232,8 @@ function renderEditor(){
   secs.forEach((sec, si) => {
     const card = document.createElement('div');
     card.className = 'ed-section' + (sec._open ? ' open' : '');
-    const tipoLabel = sec.tipo === 'bloques' ? 'BLOQUES' : sec.tipo === 'tabla' ? 'TABLA · ' + sec.fuente : sec.tipo === 'tablamanual' ? 'TABLA MANUAL' : sec.tipo.toUpperCase();
-    const tituloEditable = sec.tipo === 'bloques' || sec.tipo === 'subportada' || sec.tipo === 'tablamanual';
+    const tipoLabel = sec.tipo === 'bloques' ? 'BLOQUES' : sec.tipo === 'tabla' ? 'TABLA · ' + sec.fuente : sec.tipo === 'tablamanual' ? 'TABLA MANUAL' : sec.tipo === 'grafico' ? 'GRÁFICO' : sec.tipo.toUpperCase();
+    const tituloEditable = sec.tipo === 'bloques' || sec.tipo === 'subportada' || sec.tipo === 'tablamanual' || sec.tipo === 'grafico';
     const head = document.createElement('div');
     head.className = 'ed-head';
     head.innerHTML = '<button class="ed-btn exp">' + (sec._open ? '▾' : '▸') + '</button>'
@@ -2107,7 +2241,7 @@ function renderEditor(){
       + '<span class="ed-tipo">' + tipoLabel + '</span>'
       + '<input type="text" value="' + (sec.titulo||'').replace(/"/g,'&quot;') + '"' + (tituloEditable ? '' : ' disabled') + '>'
       + '<button class="ed-btn">▲</button><button class="ed-btn">▼</button>'
-      + ((sec.tipo === 'bloques' || sec.tipo === 'tabla' || sec.tipo === 'subportada' || sec.tipo === 'tablamanual') ? '<button class="ed-btn danger">Eliminar</button>' : '');
+      + ((sec.tipo === 'bloques' || sec.tipo === 'tabla' || sec.tipo === 'subportada' || sec.tipo === 'tablamanual' || sec.tipo === 'grafico') ? '<button class="ed-btn danger">Eliminar</button>' : '');
     card.appendChild(head);
     const hb = head.querySelectorAll('button, input');
     const expB = head.querySelector('.exp');
@@ -2300,6 +2434,132 @@ function renderEditor(){
 
       card.appendChild(body);
     }
+
+    if(sec.tipo === 'grafico'){
+      const body = document.createElement('div');
+      body.className = 'ed-body';
+      if(!sec.origen) sec.origen = 'excel';
+      const wb = LOADED_WB;
+      const EXCLUIR_HOJAS = ['Diapositivas','Config','Casos'];
+      const hojasDisponibles = wb ? wb.SheetNames.filter(n => !EXCLUIR_HOJAS.includes(n)) : [];
+      const tablasManuales = seccionesActuales().filter(s => s.tipo === 'tablamanual');
+
+      const rowOrigen = document.createElement('div');
+      rowOrigen.style.cssText = 'display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;';
+      rowOrigen.innerHTML = '<label style="font-size:12px; color:var(--muted); min-width:90px;">Origen de datos</label>'
+        + '<select class="g-origen" style="padding:7px; border:1px solid var(--gray-line); border-radius:5px; font-size:12px;">'
+        + '<option value="excel"' + (sec.origen==='excel'?' selected':'') + '>Hoja del Excel</option>'
+        + '<option value="tablamanual"' + (sec.origen==='tablamanual'?' selected':'') + '>Tabla manual de este informe</option>'
+        + '</select>';
+      body.appendChild(rowOrigen);
+
+      const rowFuente = document.createElement('div');
+      rowFuente.style.cssText = 'display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;';
+      body.appendChild(rowFuente);
+
+      const rowTipo = document.createElement('div');
+      rowTipo.style.cssText = 'display:flex; align-items:center; gap:8px; margin-bottom:10px;';
+      rowTipo.innerHTML = '<label style="font-size:12px; color:var(--muted); min-width:90px;">Tipo de gráfico</label>'
+        + '<select class="g-tipo" style="padding:7px; border:1px solid var(--gray-line); border-radius:5px; font-size:12px;">'
+        + ['barras','torta'].map(v => '<option' + (sec.tipoGrafico===v?' selected':'') + '>' + v + '</option>').join('')
+        + '</select>';
+      body.appendChild(rowTipo);
+
+      const rowCols = document.createElement('div');
+      rowCols.style.cssText = 'display:flex; align-items:center; gap:16px; margin-bottom:6px; flex-wrap:wrap;';
+      body.appendChild(rowCols);
+
+      function columnasDisponibles(){
+        if(sec.origen === 'tablamanual'){
+          const t = tablasManuales.find(x => x.titulo === sec.tablaRef);
+          return t ? t.columnas.map(c => c.titulo) : [];
+        }
+        if(wb && sec.fuente){
+          const rows = sheetToRows(wb, sec.fuente);
+          if(rows && rows.length) return Object.keys(rows[0]);
+        }
+        return [];
+      }
+      function renderColSelects(){
+        rowCols.innerHTML = '';
+        const cols = columnasDisponibles();
+        const mk = (cls, label, current) => {
+          const span = document.createElement('span');
+          span.style.cssText = 'display:inline-flex; align-items:center; gap:6px;';
+          span.innerHTML = '<label style="font-size:12px; color:var(--muted);">' + label + '</label>'
+            + '<select class="' + cls + '" style="padding:7px; border:1px solid var(--gray-line); border-radius:5px; font-size:12px;">'
+            + '<option value="">Selecciona…</option>'
+            + cols.map(c => '<option' + (current===c?' selected':'') + '>' + escHtml(c) + '</option>').join('')
+            + '</select>';
+          return span;
+        };
+        const etqSpan = mk('g-etq', 'Columna de etiqueta', sec.colEtiqueta);
+        const valSpan = mk('g-val', 'Columna de valor', sec.colValor);
+        rowCols.appendChild(etqSpan);
+        rowCols.appendChild(valSpan);
+        etqSpan.querySelector('select').addEventListener('change', e => sec.colEtiqueta = e.target.value);
+        valSpan.querySelector('select').addEventListener('change', e => sec.colValor = e.target.value);
+      }
+
+      function renderFuenteRow(){
+        rowFuente.innerHTML = '';
+        if(sec.origen === 'tablamanual'){
+          if(!tablasManuales.length){
+            const warn = document.createElement('p');
+            warn.style.cssText = 'font-size:12px; color:#c8102e; margin:0;';
+            warn.textContent = 'Todavía no hay ninguna tabla manual en esta hoja. Crea una primero (opción "Tabla manual" del mismo desplegable de arriba).';
+            rowFuente.appendChild(warn);
+            return;
+          }
+          const sel = document.createElement('span');
+          sel.style.cssText = 'display:inline-flex; align-items:center; gap:6px;';
+          sel.innerHTML = '<label style="font-size:12px; color:var(--muted); min-width:90px;">Tabla manual</label>'
+            + '<select class="g-tablaref" style="padding:7px; border:1px solid var(--gray-line); border-radius:5px; font-size:12px;">'
+            + '<option value="">Selecciona…</option>'
+            + tablasManuales.map(t => '<option' + (sec.tablaRef===t.titulo?' selected':'') + '>' + escHtml(t.titulo) + '</option>').join('')
+            + '</select>';
+          rowFuente.appendChild(sel);
+          sel.querySelector('select').addEventListener('change', e => {
+            sec.tablaRef = e.target.value;
+            sec.colEtiqueta = ''; sec.colValor = '';
+            renderColSelects();
+          });
+        } else {
+          const sel = document.createElement('span');
+          sel.style.cssText = 'display:inline-flex; align-items:center; gap:6px;';
+          sel.innerHTML = '<label style="font-size:12px; color:var(--muted); min-width:90px;">Hoja de datos</label>'
+            + '<select class="g-fuente" style="padding:7px; border:1px solid var(--gray-line); border-radius:5px; font-size:12px;">'
+            + '<option value="">Selecciona…</option>'
+            + hojasDisponibles.map(h => '<option' + (sec.fuente===h?' selected':'') + '>' + h + '</option>').join('')
+            + '</select>';
+          rowFuente.appendChild(sel);
+          sel.querySelector('select').addEventListener('change', e => {
+            sec.fuente = e.target.value;
+            sec.colEtiqueta = ''; sec.colValor = '';
+            renderColSelects();
+          });
+          if(!wb){
+            const warn = document.createElement('p');
+            warn.style.cssText = 'font-size:12px; color:#c8102e; margin:6px 0 0;';
+            warn.textContent = 'Carga primero un Excel para poder elegir la hoja y las columnas.';
+            rowFuente.appendChild(warn);
+          }
+        }
+      }
+
+      renderFuenteRow();
+      renderColSelects();
+
+      rowOrigen.querySelector('.g-origen').addEventListener('change', e => {
+        sec.origen = e.target.value;
+        sec.fuente = ''; sec.tablaRef = ''; sec.colEtiqueta = ''; sec.colValor = '';
+        renderFuenteRow();
+        renderColSelects();
+      });
+      rowTipo.querySelector('.g-tipo').addEventListener('change', e => sec.tipoGrafico = e.target.value);
+
+      card.appendChild(body);
+    }
     box.appendChild(card);
   });
 }
@@ -2341,6 +2601,8 @@ function serializeDiapositivas(){
           });
         });
         if(!any) aoa.push([hoja, sec.titulo, orden, 'tablamanual', act, '', '', '', '', '', '', '', '', '', '']);
+      } else if(sec.tipo === 'grafico'){
+        aoa.push([hoja, sec.titulo, orden, 'grafico', act, (sec.origen==='tablamanual'?'':sec.fuente||''), '', '', sec.tipoGrafico||'barras', sec.colEtiqueta||'', sec.colValor||'', sec.origen||'excel', (sec.origen==='tablamanual'?(sec.tablaRef||''):''), '', '']);
       } else {
         aoa.push([hoja, sec.titulo, orden, sec.tipo, act, sec.fuente||'', '', '', '', '', '', '', '', '', '']);
       }

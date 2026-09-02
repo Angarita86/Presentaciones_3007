@@ -70,7 +70,7 @@ constante `EXPECTED` en `index.html`.
 ### Hoja `Diapositivas` (estructura)
 
 Columnas: `Hoja` (`Portada` · `Informe` · `Caso 1` a `Caso 5`), `Seccion`, `Orden`,
-`Tipo` (`tabla` · `contactabilidad` · `mapa` · `bloques` · `subportada` · `tablamanual` · `campo` para portada · `hoja` para definir un caso),
+`Tipo` (`tabla` · `contactabilidad` · `mapa` · `bloques` · `subportada` · `tablamanual` · `grafico` · `campo` para portada · `hoja` para definir un caso),
 `Activa` (SI/NO), `Fuente` (para tipo tabla: nombre de la hoja de datos), y para tipo `bloques` una fila por celda con:
 `Bloque` (1-4), `Celda` (1-4), `Contenido` (`texto` · `imagen` · `imagen+texto`), `Titulo`, `Detalle`,
 `Cifra`, `Fondo` (`blanco` · `azul` · `dorado` · `rojo` · `gris`), `Imagen` (nombre de archivo en `fotos/` o `imagenes/`)
@@ -90,8 +90,17 @@ y `Ajuste` (`recortar` · `completa`).
   En el Excel, la fila con `Bloque=0` define los encabezados de columna (`Celda`=número de columna, `Titulo`=texto
   del encabezado, `Fondo`=color del encabezado); las filas con `Bloque=1` en adelante son los datos (`Bloque`=número
   de fila, `Celda`=número de columna, `Detalle`=valor de esa celda).
+- **Gráfico**: sección de tipo `Tipo=grafico`, que dibuja un gráfico de barras o de torta a partir de una hoja
+  del Excel de datos, o a partir de una tabla manual ya creada en la misma hoja del Informe o del Caso. Una sola
+  fila define la sección: `Contenido`=`barras` o `torta`, `Titulo`=nombre de la columna que se usa como etiqueta,
+  `Detalle`=nombre de la columna numérica que se grafica, `Cifra`=`excel` o `tablamanual` (el origen de los datos).
+  Si el origen es `excel`, `Fuente`=nombre de la hoja de datos. Si el origen es `tablamanual`, `Fondo`=título de
+  la tabla manual de referencia (debe existir una tabla manual con ese título exacto en la misma hoja). Si una
+  etiqueta aparece en varias filas, sus valores se suman. Se crea y edita desde **Diseño de hojas**, donde el
+  origen, la hoja o tabla, y las columnas se eligen de listas desplegables en vez de escribirse a mano.
 - **Casos Emblemáticos**: cada caso se define con una fila `Tipo=hoja` (nombre en `Seccion`, estado en `Activa`)
-  y sus secciones (bloques, subportadas o tablas manuales) con `Hoja=Caso N`. Los casos inactivos no aparecen en el menú.
+  y sus secciones (bloques, subportadas, tablas manuales o gráficos) con `Hoja=Caso N`. Los casos inactivos no
+  aparecen en el menú.
 
 ## Guardar directo desde el informe (token de GitHub)
 
