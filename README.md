@@ -109,6 +109,9 @@ y `Ajuste` (`recortar` · `completa`).
   sección, con las mismas columnas y el mismo significado de `Cifra`/`Fondo`/`Fuente` que la sección `grafico`,
   cambiando `Titulo` por el nombre de la columna de departamento. El nombre del departamento se compara sin
   distinguir mayúsculas ni tildes; los que no se reconozcan se listan debajo del mapa para poder corregirlos.
+- **Tabla resumen (gráfico y mapa)**: ambos tipos pueden mostrar, opcionalmente, una tabla con los mismos datos
+  agregados a la izquierda o a la derecha del gráfico o del mapa, controlado por la columna `Imagen` de esa fila
+  (`ninguna` · `izquierda` · `derecha`). Se elige desde el mismo editor, en el desplegable "Tabla resumen".
 - **Casos Emblemáticos**: cada caso se define con una fila `Tipo=hoja` (nombre en `Seccion`, estado en `Activa`)
   y sus secciones (bloques, subportadas, tablas manuales o gráficos) con `Hoja=Caso N`. Los casos inactivos no
   aparecen en el menú.
